@@ -21,11 +21,22 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/', (_req, res) => {
-    res.status(200).json({
-        service: 'smallkitchenSite',
-        status: 'running',
-        endpoints: ['/health', '/upload-sample'],
-    });
+        res.status(200).type('html').send(`<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>smallkitchenSite</title>
+</head>
+<body>
+    <h1>smallkitchenSite is running</h1>
+    <p>Available endpoints:</p>
+    <ul>
+        <li>GET /health</li>
+        <li>POST /upload-sample</li>
+    </ul>
+</body>
+</html>`);
 });
 
 app.post('/upload-sample', async (_req, res) => {
