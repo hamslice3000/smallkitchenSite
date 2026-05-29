@@ -8,7 +8,23 @@
     <div id="my-gallery" style="max-width:80%;margin:auto"></div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
-        async function renderGalleryFromTag() {
+        const folderName = "smallkitchen";
+
+        async function getFolderPublicIds() {
+            const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/${encodeURIComponent(folderName)}.json`;
+            const response = await fetch(listUrl, { cache: "no-store" });
+
+            if (!response.ok) {
+                throw new Error(`Unable to load asset list from ${listUrl}`);
+            }
+
+            const payload = await response.json();
+            return (payload.resources || [])
+                .map((asset) => asset.public_id)
+                .filter((publicId) => publicId && publicId.startsWith(`${folderName}/`));
+        }
+
+        async function renderGalleryFromFolder() {
             const container = document.getElementById("my-gallery");
 
             if (!cloudName) {
@@ -16,18 +32,29 @@
                 return;
             }
 
-            const myGallery = cloudinary.galleryWidget({
-                container: "#my-gallery",
-                cloudName,
-                mediaAssets: [
-                    { tag: "smallkitchen" }
-                ]
-            });
+            try {
+                const publicIds = await getFolderPublicIds();
 
-            myGallery.render();
+                if (!publicIds.length) {
+                    container.textContent = "No media assets are available in the smallkitchen folder. Confirm the folder is public and client-side asset lists are enabled in Cloudinary.";
+                    return;
+                }
+
+                const myGallery = cloudinary.galleryWidget({
+                    container: "#my-gallery",
+                    cloudName,
+                    sort: "none",
+                    mediaAssets: publicIds.map((publicId) => ({ publicId }))
+                });
+
+                myGallery.render();
+            } catch (error) {
+                container.textContent = "Could not load Cloudinary assets for preview. Check the cloud name, folder name, and Cloudinary client-side asset list settings.";
+                console.error(error);
+            }
         }
 
-        renderGalleryFromTag();
+        renderGalleryFromFolder();
     </script>
 </body>
 </html>
