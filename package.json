@@ -1,0 +1,13 @@
+{
+  "name": "smallkitchensite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cloudinary": "^2.5.1",
+    "express": "^4.21.2"
+  }
+}
