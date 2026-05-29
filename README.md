@@ -22,6 +22,9 @@ This app now runs as an HTTP service.
 Add these in Render -> Environment:
 
 - `CLOUDINARY_CLOUD_NAME`
+
+If you later add uploads or admin calls, also add:
+
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
 
@@ -30,9 +33,8 @@ Never store real secrets in this repository.
 ## Where secrets are protected
 
 - In GitHub: secrets are **not committed** because `.env` is ignored by `.gitignore`.
-- In Render: you store secrets in the service's Environment settings, not in code.
-- At runtime: Render injects those values as process environment variables (`process.env`).
-- In this app: credentials are read from environment variables only and never hardcoded.
+- In Render: `CLOUDINARY_CLOUD_NAME` is injected at runtime and exposed to the page through `/config.js`.
+- In this app: the gallery reads the cloud name from `window.__APP_CONFIG__`, not from a hardcoded value.
 
 ## Test after deploy
 
