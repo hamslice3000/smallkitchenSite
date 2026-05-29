@@ -8,23 +8,9 @@
     <div id="my-gallery" style="max-width:80%;margin:auto"></div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
-        const folderName = "smallkitchen";
+        const repeatedPublicId = "4BE88C41-4235-4428-B0D5-7276BFF07183_wv3srg";
 
-        async function getFolderPublicIds() {
-            const listUrl = `/gallery-assets?folder=${encodeURIComponent(folderName)}`;
-            const response = await fetch(listUrl, { cache: "no-store" });
-
-            if (!response.ok) {
-                throw new Error(`Unable to load asset list from ${listUrl}`);
-            }
-
-            const payload = await response.json();
-            return (payload.resources || [])
-                .map((asset) => asset.public_id)
-                .filter((publicId) => publicId && publicId.startsWith(`${folderName}/`));
-        }
-
-        async function renderGalleryFromFolder() {
+        function renderGalleryFromRepeatedAsset() {
             const container = document.getElementById("my-gallery");
 
             if (!cloudName) {
@@ -32,29 +18,17 @@
                 return;
             }
 
-            try {
-                const publicIds = await getFolderPublicIds();
+            const myGallery = cloudinary.galleryWidget({
+                container: "#my-gallery",
+                cloudName,
+                sort: "none",
+                mediaAssets: Array.from({ length: 10 }, () => ({ publicId: repeatedPublicId }))
+            });
 
-                if (!publicIds.length) {
-                    container.textContent = "No media assets are available in the smallkitchen folder. Confirm the folder is public and client-side asset lists are enabled in Cloudinary.";
-                    return;
-                }
-
-                const myGallery = cloudinary.galleryWidget({
-                    container: "#my-gallery",
-                    cloudName,
-                    sort: "none",
-                    mediaAssets: publicIds.map((publicId) => ({ publicId }))
-                });
-
-                myGallery.render();
-            } catch (error) {
-                container.textContent = "Could not load Cloudinary assets for preview. Check the cloud name, folder name, and Cloudinary client-side asset list settings.";
-                console.error(error);
-            }
+            myGallery.render();
         }
 
-        renderGalleryFromFolder();
+        renderGalleryFromRepeatedAsset();
     </script>
 </body>
 </html>

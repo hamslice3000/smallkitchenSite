@@ -13,7 +13,7 @@ async function fetchCloudinaryFolderAssets(folderName) {
         throw new Error("Missing Cloudinary environment variables.");
     }
 
-    const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/by_asset_folder?asset_folder=${encodeURIComponent(folderName)}&max_results=500`;
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/by_asset_folder?asset_folder=${encodeURIComponent(folderName)}&max_results=10`;
     const authorization = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
 
     const response = await fetch(url, {
@@ -46,10 +46,14 @@ app.get("/gallery-assets", async (req, res) => {
     try {
         const payload = await fetchCloudinaryFolderAssets(folderName);
         const resources = Array.isArray(payload.resources) ? payload.resources : [];
+        const selectedResources = resources
+            .slice()
+            .sort((left, right) => String(left.public_id).localeCompare(String(right.public_id)))
+            .slice(0, 10);
 
         res.json({
             folder: folderName,
-            resources: resources.map((resource) => ({
+            resources: selectedResources.map((resource) => ({
                 public_id: resource.public_id,
                 resource_type: resource.resource_type,
                 type: resource.type,
