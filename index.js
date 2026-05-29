@@ -20,6 +20,14 @@ app.get('/health', (_req, res) => {
     res.status(200).json({ ok: true });
 });
 
+app.get('/', (_req, res) => {
+    res.status(200).json({
+        service: 'smallkitchenSite',
+        status: 'running',
+        endpoints: ['/health', '/upload-sample'],
+    });
+});
+
 app.post('/upload-sample', async (_req, res) => {
     try {
         const uploadResult = await cloudinary.uploader.upload(
