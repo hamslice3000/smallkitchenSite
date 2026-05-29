@@ -11,7 +11,7 @@
         const folderName = "smallkitchen";
 
         async function getFolderPublicIds() {
-            const listUrl = `https://res.cloudinary.com/${cloudName}/image/list/${encodeURIComponent(folderName)}.json`;
+            const listUrl = `/gallery-assets?folder=${encodeURIComponent(folderName)}`;
             const response = await fetch(listUrl, { cache: "no-store" });
 
             if (!response.ok) {
