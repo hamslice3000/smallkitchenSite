@@ -6,12 +6,13 @@
 <body>
     <div id="my-gallery" style="max-width:80%;margin:auto"></div>
     <script type="text/javascript">
+        const cloudName = "YOUR_CLOUDINARY_CLOUD_NAME";
+
         const myGallery = cloudinary.galleryWidget({
             container: "#my-gallery",
-            cloudName: "demo",
+            cloudName,
             mediaAssets: [
-                { tag: "electric_car_product_gallery_demo" }, // images (mediaType defaults to image)
-                { tag: "electric_car_product_gallery_demo", mediaType: "video" }
+                { tag: "smallkitchen" }
             ]
         });
         myGallery.render();
