@@ -159,7 +159,7 @@
         function cloudinarySrcSet(publicId, widths) {
             return widths
                 .map((width) => {
-                    const transform = `c_limit,w_${width},dpr_auto,q_auto,f_auto`;
+                    const transform = `a_auto,c_limit,w_${width},dpr_auto,q_auto,f_auto`;
                     return `${cloudinaryImageUrl(publicId, transform)} ${width}w`;
                 })
                 .join(", ");
@@ -306,7 +306,12 @@
                     thumb.loading = "lazy";
                     thumb.sizes = galleryImageSizes();
                     thumb.srcset = cloudinarySrcSet(asset.publicId, [240, 360, 480, 720, 960]);
-                    thumb.src = cloudinaryImageUrl(asset.publicId, "c_limit,w_720,dpr_auto,q_auto,f_auto");
+                    thumb.src = cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_720,dpr_auto,q_auto,f_auto");
+                    thumb.addEventListener("load", () => {
+                        if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
+                            button.style.setProperty("--aspect-ratio", String(thumb.naturalWidth / thumb.naturalHeight));
+                        }
+                    });
 
                     button.appendChild(thumb);
                     button.addEventListener("mouseenter", () => applyHoverMotion(index));
