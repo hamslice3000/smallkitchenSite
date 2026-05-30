@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-    //working stage
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
@@ -252,6 +251,20 @@
                 .join(", ");
         }
 
+        function srcSetWidthsForMax(maxWidth) {
+            const roundedMax = Math.round(maxWidth);
+
+            if (!Number.isFinite(roundedMax) || roundedMax <= 0) {
+                return [960, 1280, 1600, 2000, 2400, 3000, 3600];
+            }
+
+            const baseCandidates = [960, 1280, 1600, 2000, 2400, 3000, 3600, 4200, 5200, 6400];
+            const widths = baseCandidates.filter((width) => width < roundedMax);
+            widths.push(roundedMax);
+
+            return Array.from(new Set(widths)).sort((a, b) => a - b);
+        }
+
         function galleryImageSizes() {
             return "(max-width: 768px) 48vw, (max-width: 1200px) 38vw, 70vw";
         }
@@ -378,10 +391,16 @@
 
                     const tiles = group.map((asset, index) => {
                         const tile = TILE_LAYOUT[index];
+                        const maxWidth = Number.isFinite(asset.width) && asset.width > 0
+                            ? Math.round(asset.width)
+                            : 3600;
+
                         return {
                             ...tile,
                             publicId: asset.publicId,
-                                src: cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_3600,dpr_auto,q_auto:best,f_auto")
+                            maxWidth,
+                            srcSetWidths: srcSetWidthsForMax(maxWidth),
+                            src: cloudinaryImageUrl(asset.publicId, `a_auto,c_limit,w_${maxWidth},dpr_auto,q_auto:best,f_auto`)
                         };
                     });
 
@@ -426,7 +445,7 @@
                         thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                         thumb.loading = "lazy";
                         thumb.sizes = galleryImageSizes();
-                        thumb.srcset = cloudinarySrcSet(tile.publicId, [960, 1280, 1600, 2000, 2400, 3000, 3600]);
+                        thumb.srcset = cloudinarySrcSet(tile.publicId, tile.srcSetWidths);
                         thumb.src = tile.src;
 
                         const label = document.createElement("div");
