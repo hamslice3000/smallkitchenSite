@@ -233,14 +233,14 @@
         function cloudinarySrcSet(publicId, widths) {
             return widths
                 .map((width) => {
-                    const transform = `a_auto,c_fill,w_${width},h_${Math.round(width * 0.75)},dpr_auto,q_auto,f_auto`;
+                    const transform = `a_auto,c_fill,w_${width},h_${Math.round(width * 0.75)},dpr_auto,q_auto:best,f_auto`;
                     return `${cloudinaryImageUrl(publicId, transform)} ${width}w`;
                 })
                 .join(", ");
         }
 
         function galleryImageSizes() {
-            return "(max-width: 768px) 48vw, (max-width: 1200px) 24vw, 320px";
+            return "(max-width: 768px) 48vw, (max-width: 1200px) 38vw, 70vw";
         }
 
         function tracksForAxis(hoveredTile, axis) {
@@ -352,7 +352,7 @@
                     return {
                         ...tile,
                         publicId: asset.publicId,
-                        src: cloudinaryImageUrl(asset.publicId, "a_auto,c_fill,w_1600,h_1200,dpr_auto,q_auto,f_auto")
+                        src: cloudinaryImageUrl(asset.publicId, "a_auto,c_fill,w_2400,h_1800,dpr_auto,q_auto:best,f_auto")
                     };
                 });
 
@@ -396,7 +396,7 @@
                     thumb.alt = tile.label;
                     thumb.loading = "lazy";
                     thumb.sizes = galleryImageSizes();
-                    thumb.srcset = cloudinarySrcSet(tile.publicId, [420, 680, 960, 1240, 1600]);
+                    thumb.srcset = cloudinarySrcSet(tile.publicId, [640, 960, 1280, 1600, 2000, 2400]);
                     thumb.src = tile.src;
 
                     const label = document.createElement("div");
