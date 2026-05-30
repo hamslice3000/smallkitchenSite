@@ -6,6 +6,7 @@
     <script src="https://product-gallery.cloudinary.com/latest/all.js" type="text/javascript"></script>
     <script src="/config.js" type="text/javascript"></script>
     <!-- POC works in render.com -->
+     <!--basic mobile works-->
     <style>
         * {
             box-sizing: border-box;
@@ -39,9 +40,24 @@
     <div id="my-gallery"></div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
-        const repeatedPublicId = "4BE88C41-4235-4428-B0D5-7276BFF07183_wv3srg";
+        const folderName = "smallkitchen";
 
-        function renderGalleryFromRepeatedAsset() {
+        async function fetchGalleryPublicIds(folder) {
+            const response = await fetch(`/gallery-assets?folder=${encodeURIComponent(folder)}`);
+
+            if (!response.ok) {
+                throw new Error(`Asset lookup failed with status ${response.status}`);
+            }
+
+            const payload = await response.json();
+            const resources = Array.isArray(payload.resources) ? payload.resources : [];
+            return resources
+                .map((resource) => resource && resource.public_id)
+                .filter((publicId) => typeof publicId === "string" && publicId.length > 0)
+                .slice(0, 10);
+        }
+
+        async function renderGalleryFromFolder() {
             const container = document.getElementById("my-gallery");
 
             if (!cloudName) {
@@ -49,17 +65,28 @@
                 return;
             }
 
-            const myGallery = cloudinary.galleryWidget({
-                container: "#my-gallery",
-                cloudName,
-                sort: "none",
-                mediaAssets: Array.from({ length: 10 }, () => ({ publicId: repeatedPublicId }))
-            });
+            try {
+                const publicIds = await fetchGalleryPublicIds(folderName);
 
-            myGallery.render();
+                if (!publicIds.length) {
+                    container.textContent = `No assets found in folder: ${folderName}`;
+                    return;
+                }
+
+                const myGallery = cloudinary.galleryWidget({
+                    container: "#my-gallery",
+                    cloudName,
+                    sort: "none",
+                    mediaAssets: publicIds.map((publicId) => ({ publicId }))
+                });
+
+                myGallery.render();
+            } catch (error) {
+                container.textContent = `Unable to load gallery assets: ${error.message}`;
+            }
         }
 
-        renderGalleryFromRepeatedAsset();
+        renderGalleryFromFolder();
     </script>
 </body>
 </html>

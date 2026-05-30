@@ -46,10 +46,7 @@ app.get("/gallery-assets", async (req, res) => {
     try {
         const payload = await fetchCloudinaryFolderAssets(folderName);
         const resources = Array.isArray(payload.resources) ? payload.resources : [];
-        const selectedResources = resources
-            .slice()
-            .sort((left, right) => String(left.public_id).localeCompare(String(right.public_id)))
-            .slice(0, 10);
+        const selectedResources = resources.slice(0, 10);
 
         res.json({
             folder: folderName,
