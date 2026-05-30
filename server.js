@@ -53,6 +53,8 @@ app.get("/gallery-assets", async (req, res) => {
             folder: folderName,
             resources: selectedResources.map((resource) => ({
                 public_id: resource.public_id,
+                width: resource.width,
+                height: resource.height,
                 resource_type: resource.resource_type,
                 type: resource.type,
                 format: resource.format,
