@@ -168,6 +168,7 @@
         }
 
         .grid-item.is-focused .grid-thumb {
+            object-fit: contain;
             transform: scale(var(--focus-scale, 1.06));
             filter: saturate(1.25);
         }
@@ -294,14 +295,14 @@
             const mismatch = Math.max(imageAspect / tileAspect, tileAspect / imageAspect);
 
             if (mismatch >= 1.8) {
-                return "1.01";
+                return "1.0";
             }
 
             if (mismatch >= 1.35) {
-                return "1.03";
+                return "1.0";
             }
 
-            return "1.06";
+            return "1.01";
         }
 
         function srcSetWidthsForMax(maxWidth) {
@@ -447,7 +448,6 @@
                         const maxWidth = Number.isFinite(asset.width) && asset.width > 0
                             ? Math.round(asset.width)
                             : 3600;
-                        const aspectRatioToken = aspectRatioTokenForTile(tile);
                         const srcSetWidths = srcSetWidthsForMax(maxWidth);
 
                         return {
@@ -458,14 +458,10 @@
                             restSrc: cloudinaryBestSrc(asset.publicId, maxWidth, { cropMode: "limit" }),
                             restSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" }),
                             focusSrc: cloudinaryBestSrc(asset.publicId, maxWidth, {
-                                cropMode: "fill",
-                                gravity: "auto",
-                                aspectRatioToken
+                                cropMode: "limit"
                             }),
                             focusSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, {
-                                cropMode: "fill",
-                                gravity: "auto",
-                                aspectRatioToken
+                                cropMode: "limit"
                             }),
                             focusScale: focusScaleForImage(asset, tile)
                         };
