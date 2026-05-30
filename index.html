@@ -381,7 +381,7 @@
                         return {
                             ...tile,
                             publicId: asset.publicId,
-                            src: cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_2400,dpr_auto,q_auto:best,f_auto")
+                                src: cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_3600,dpr_auto,q_auto:best,f_auto")
                         };
                     });
 
@@ -426,7 +426,7 @@
                         thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                         thumb.loading = "lazy";
                         thumb.sizes = galleryImageSizes();
-                        thumb.srcset = cloudinarySrcSet(tile.publicId, [640, 960, 1280, 1600, 2000, 2400]);
+                        thumb.srcset = cloudinarySrcSet(tile.publicId, [960, 1280, 1600, 2000, 2400, 3000, 3600]);
                         thumb.src = tile.src;
 
                         const label = document.createElement("div");
