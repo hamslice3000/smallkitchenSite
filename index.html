@@ -309,7 +309,7 @@
             const tileAspect = tile.colSpan / tile.rowSpan;
             const mismatch = Math.max(imageAspect / tileAspect, tileAspect / imageAspect);
 
-            // Extreme mismatch keeps full image instead of forcing aggressive crop.
+            // Keep extreme mismatches from over-cropping by falling back to a full-image fit.
             return mismatch >= 1.65 ? "limit" : "fill";
         }
 
