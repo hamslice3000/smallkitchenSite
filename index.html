@@ -71,6 +71,7 @@
             width: 100%;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             grid-auto-rows: 48px;
+            grid-auto-flow: dense;
             gap: 0;
             overflow: hidden;
             background: transparent;
@@ -136,7 +137,7 @@
     </div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
-        const folderName = "smallkitchen";
+        const folderName = "smallkitechen";
 
         function encodePublicId(publicId) {
             return publicId
@@ -161,7 +162,21 @@
             return resources
                 .map((resource) => resource && resource.public_id)
                 .filter((publicId) => typeof publicId === "string" && publicId.length > 0)
-                .slice(0, 10);
+                .slice(0, 30);
+        }
+
+        async function fetchWithFolderFallback(primaryFolder, fallbackFolder) {
+            try {
+                const ids = await fetchGalleryPublicIds(primaryFolder);
+                if (ids.length) {
+                    return { publicIds: ids, folderUsed: primaryFolder };
+                }
+            } catch (error) {
+                // If primary lookup fails, we retry with a fallback folder name.
+            }
+
+            const fallbackIds = await fetchGalleryPublicIds(fallbackFolder);
+            return { publicIds: fallbackIds, folderUsed: fallbackFolder };
         }
 
         function displayNameFromPublicId(publicId) {
@@ -190,7 +205,7 @@
             }
 
             try {
-                const publicIds = await fetchGalleryPublicIds(folderName);
+                const { publicIds, folderUsed } = await fetchWithFolderFallback(folderName, "smallkitchen");
 
                 if (!publicIds.length) {
                     setStatus(`No assets found in folder: ${folderName}`);
@@ -199,18 +214,22 @@
 
                 clearStatus();
 
+                if (folderUsed !== folderName) {
+                    setStatus(`Using fallback folder: ${folderUsed}`);
+                }
+
                 const itemButtons = [];
                 const sizePattern = [
                     { c: 3, r: 4 },
-                    { c: 4, r: 6 },
-                    { c: 2, r: 3 },
-                    { c: 3, r: 5 },
-                    { c: 5, r: 4 },
-                    { c: 2, r: 4 },
-                    { c: 4, r: 5 },
+                    { c: 4, r: 3 },
+                    { c: 4, r: 4 },
                     { c: 3, r: 3 },
-                    { c: 2, r: 5 },
-                    { c: 4, r: 4 }
+                    { c: 4, r: 3 },
+                    { c: 3, r: 4 },
+                    { c: 4, r: 4 },
+                    { c: 3, r: 3 },
+                    { c: 4, r: 3 },
+                    { c: 3, r: 4 }
                 ];
 
                 function clearHoverMotion() {
@@ -273,7 +292,7 @@
                     thumb.className = "grid-thumb";
                     thumb.alt = displayNameFromPublicId(publicId);
                     thumb.loading = "lazy";
-                    thumb.src = cloudinaryImageUrl(publicId, "c_fill,w_1400,h_1400,q_auto,f_auto");
+                    thumb.src = cloudinaryImageUrl(publicId, "c_limit,w_1800,h_1800,q_auto,f_auto");
 
                     button.appendChild(thumb);
                     button.addEventListener("mouseenter", () => applyHoverMotion(index));
