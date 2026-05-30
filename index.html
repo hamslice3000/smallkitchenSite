@@ -3,44 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-    <script src="https://product-gallery.cloudinary.com/latest/all.js" type="text/javascript"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="/config.js" type="text/javascript"></script>
-    <!-- POC works in render.com -->
     <style>
+        :root {
+            --ink: #13212f;
+            --mist: #eaf6ff;
+            --card: #f7fbff;
+            --accent: #f25f3a;
+            --accent-soft: #ffd9cf;
+            --line: #cddfea;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
-            padding: 12px;
-            font-family: Arial, sans-serif;
-            background: #fff;
+            padding: 24px;
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 5% 10%, #ffe5d8 0%, transparent 32%),
+                radial-gradient(circle at 96% 92%, #d5ecff 0%, transparent 38%),
+                linear-gradient(180deg, #ffffff 0%, #f1f7fb 100%);
         }
-        /* basic mobile works */
-        #my-gallery {
-            width: min(100%, 1100px);
+
+        .page-shell {
+            width: min(1200px, 100%);
             margin: 0 auto;
-            touch-action: pinch-zoom;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            letter-spacing: 0.12em;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #47647d;
+        }
+
+        .title {
+            margin: 0 0 20px;
+            font-size: clamp(24px, 4vw, 48px);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            max-width: 18ch;
+        }
+
+        #status {
+            margin-bottom: 16px;
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #ffffff;
+        }
+
+        #my-gallery {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .grid-wall {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .grid-item {
+            position: relative;
+            padding: 0;
+            border: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #cad5df;
+            aspect-ratio: 1 / 1;
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
+        }
+
+        .grid-item:hover,
+        .grid-item:focus-visible,
+        .grid-item.active {
+            transform: translateY(-2px) scale(1.015);
+            box-shadow: 0 12px 24px rgba(19, 33, 47, 0.18);
+            outline: 2px solid transparent;
+        }
+
+        .grid-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: saturate(0.9) contrast(1.03);
+            transition: filter 0.22s ease;
+        }
+
+        .grid-item:hover .grid-thumb,
+        .grid-item:focus-visible .grid-thumb,
+        .grid-item.active .grid-thumb {
+            filter: saturate(1.05) contrast(1.08);
+        }
+
+        .hover-preview {
+            position: sticky;
+            top: 18px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--card);
+            box-shadow: 0 20px 36px rgba(36, 64, 88, 0.15);
+            transform: translateY(0);
+            animation: liftIn 280ms ease;
+        }
+
+        .preview-image {
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #dbe6ee;
+        }
+
+        .preview-meta {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .preview-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+        .preview-count {
+            margin: 0;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--accent-soft);
+            background: #fff6f2;
+            color: #8b3f2b;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        @keyframes liftIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 768px) {
             body {
-                padding: 8px;
+                padding: 14px;
             }
 
             #my-gallery {
-                width: 100%;
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .grid-wall {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .hover-preview {
+                position: static;
             }
         }
     </style>
 </head>
 <body>
-    <div id="my-gallery"></div>
-    <!-- Admin API for media access -->
+    <div class="page-shell">
+        <p class="eyebrow">Small Kitchen</p>
+        <h1 class="title">Grid Hover Image Preview</h1>
+        <div id="status"></div>
+        <div id="my-gallery">
+            <div class="grid-wall" id="grid-wall"></div>
+            <aside class="hover-preview" id="hover-preview" hidden>
+                <img id="preview-image" class="preview-image" alt="Selected preview">
+                <div class="preview-meta">
+                    <h2 id="preview-title" class="preview-title"></h2>
+                    <p id="preview-count" class="preview-count"></p>
+                </div>
+            </aside>
+        </div>
+    </div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const folderName = "smallkitchen";
+
+        function encodePublicId(publicId) {
+            return publicId
+                .split("/")
+                .map((segment) => encodeURIComponent(segment))
+                .join("/");
+        }
+
+        function cloudinaryImageUrl(publicId, transform) {
+            return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${encodePublicId(publicId)}`;
+        }
 
         async function fetchGalleryPublicIds(folder) {
             const response = await fetch(`/gallery-assets?folder=${encodeURIComponent(folder)}`);
@@ -57,37 +238,90 @@
                 .slice(0, 10);
         }
 
-        async function renderGalleryFromFolder() {
-            const container = document.getElementById("my-gallery");
+        function displayNameFromPublicId(publicId) {
+            const chunk = publicId.split("/").pop() || publicId;
+            return chunk.replace(/[-_]+/g, " ");
+        }
+
+        function setStatus(message) {
+            const status = document.getElementById("status");
+            status.textContent = message;
+            status.hidden = false;
+        }
+
+        function clearStatus() {
+            const status = document.getElementById("status");
+            status.hidden = true;
+            status.textContent = "";
+        }
+
+        async function renderGridHoverGallery() {
+            const gridWall = document.getElementById("grid-wall");
+            const preview = document.getElementById("hover-preview");
+            const previewImage = document.getElementById("preview-image");
+            const previewTitle = document.getElementById("preview-title");
+            const previewCount = document.getElementById("preview-count");
 
             if (!cloudName) {
-                container.textContent = "Cloudinary cloud name is not configured. Set CLOUDINARY_CLOUD_NAME in your server environment.";
+                setStatus("Cloudinary cloud name is not configured. Set CLOUDINARY_CLOUD_NAME in your server environment.");
                 return;
             }
 
             try {
-                //fetch Public IDs
                 const publicIds = await fetchGalleryPublicIds(folderName);
 
                 if (!publicIds.length) {
-                    container.textContent = `No assets found in folder: ${folderName}`;
+                    setStatus(`No assets found in folder: ${folderName}`);
                     return;
                 }
-                // Cloudinary Gallery Widget
-                const myGallery = cloudinary.galleryWidget({
-                    container: "#my-gallery",
-                    cloudName,
-                    sort: "none",
-                    mediaAssets: publicIds.map((publicId) => ({ publicId }))
+
+                clearStatus();
+
+                let activeIndex = 0;
+                const itemButtons = [];
+
+                function updatePreview(nextIndex) {
+                    activeIndex = nextIndex;
+                    const activeId = publicIds[nextIndex];
+
+                    preview.hidden = false;
+                    previewImage.src = cloudinaryImageUrl(activeId, "c_fill,w_900,h_700,q_auto,f_auto");
+                    previewTitle.textContent = displayNameFromPublicId(activeId);
+                    previewCount.textContent = `${nextIndex + 1} / ${publicIds.length}`;
+
+                    itemButtons.forEach((button, index) => {
+                        button.classList.toggle("active", index === nextIndex);
+                    });
+                }
+
+                publicIds.forEach((publicId, index) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "grid-item";
+                    button.setAttribute("aria-label", `Preview image ${index + 1}`);
+
+                    const thumb = document.createElement("img");
+                    thumb.className = "grid-thumb";
+                    thumb.alt = displayNameFromPublicId(publicId);
+                    thumb.loading = "lazy";
+                    thumb.src = cloudinaryImageUrl(publicId, "c_fill,w_520,h_520,q_auto,f_auto");
+
+                    button.appendChild(thumb);
+                    button.addEventListener("mouseenter", () => updatePreview(index));
+                    button.addEventListener("focus", () => updatePreview(index));
+                    button.addEventListener("click", () => updatePreview(index));
+
+                    itemButtons.push(button);
+                    gridWall.appendChild(button);
                 });
 
-                myGallery.render();
+                updatePreview(activeIndex);
             } catch (error) {
-                container.textContent = `Unable to load gallery assets: ${error.message}`;
+                setStatus(`Unable to load gallery assets: ${error.message}`);
             }
         }
 
-        renderGalleryFromFolder();
+        renderGridHoverGallery();
     </script>
 </body>
 </html>
