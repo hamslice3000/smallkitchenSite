@@ -168,7 +168,7 @@
         }
 
         .grid-item.is-focused .grid-thumb {
-            transform: scale(1.1);
+            transform: scale(var(--focus-scale, 1.06));
             filter: saturate(1.25);
         }
 
@@ -242,13 +242,66 @@
             return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${encodePublicId(publicId)}`;
         }
 
-        function cloudinarySrcSet(publicId, widths) {
+        function cloudinarySrcSet(publicId, widths, options = {}) {
+            const cropMode = options.cropMode || "limit";
+            const aspectRatioToken = options.aspectRatioToken || null;
+            const gravity = options.gravity || null;
+
             return widths
                 .map((width) => {
-                    const transform = `a_auto,c_limit,w_${width},dpr_auto,q_auto:best,f_auto`;
+                    const transforms = ["a_auto", `c_${cropMode}`];
+
+                    if (gravity) {
+                        transforms.push(`g_${gravity}`);
+                    }
+
+                    if (aspectRatioToken) {
+                        transforms.push(`ar_${aspectRatioToken}`);
+                    }
+
+                    transforms.push(`w_${width}`, "dpr_auto", "q_auto:best", "f_auto");
+                    const transform = transforms.join(",");
                     return `${cloudinaryImageUrl(publicId, transform)} ${width}w`;
                 })
                 .join(", ");
+        }
+
+        function cloudinaryBestSrc(publicId, maxWidth, options = {}) {
+            const cropMode = options.cropMode || "limit";
+            const aspectRatioToken = options.aspectRatioToken || null;
+            const gravity = options.gravity || null;
+            const transforms = ["a_auto", `c_${cropMode}`];
+
+            if (gravity) {
+                transforms.push(`g_${gravity}`);
+            }
+
+            if (aspectRatioToken) {
+                transforms.push(`ar_${aspectRatioToken}`);
+            }
+
+            transforms.push(`w_${maxWidth}`, "dpr_auto", "q_auto:best", "f_auto");
+            return cloudinaryImageUrl(publicId, transforms.join(","));
+        }
+
+        function aspectRatioTokenForTile(tile) {
+            return `${tile.colSpan}:${tile.rowSpan}`;
+        }
+
+        function focusScaleForImage(asset, tile) {
+            const imageAspect = asset.width > 0 && asset.height > 0 ? asset.width / asset.height : 1;
+            const tileAspect = tile.colSpan / tile.rowSpan;
+            const mismatch = Math.max(imageAspect / tileAspect, tileAspect / imageAspect);
+
+            if (mismatch >= 1.8) {
+                return "1.01";
+            }
+
+            if (mismatch >= 1.35) {
+                return "1.03";
+            }
+
+            return "1.06";
         }
 
         function srcSetWidthsForMax(maxWidth) {
@@ -394,13 +447,27 @@
                         const maxWidth = Number.isFinite(asset.width) && asset.width > 0
                             ? Math.round(asset.width)
                             : 3600;
+                        const aspectRatioToken = aspectRatioTokenForTile(tile);
+                        const srcSetWidths = srcSetWidthsForMax(maxWidth);
 
                         return {
                             ...tile,
                             publicId: asset.publicId,
                             maxWidth,
-                            srcSetWidths: srcSetWidthsForMax(maxWidth),
-                            src: cloudinaryImageUrl(asset.publicId, `a_auto,c_limit,w_${maxWidth},dpr_auto,q_auto:best,f_auto`)
+                            srcSetWidths,
+                            restSrc: cloudinaryBestSrc(asset.publicId, maxWidth, { cropMode: "limit" }),
+                            restSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" }),
+                            focusSrc: cloudinaryBestSrc(asset.publicId, maxWidth, {
+                                cropMode: "fill",
+                                gravity: "auto",
+                                aspectRatioToken
+                            }),
+                            focusSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, {
+                                cropMode: "fill",
+                                gravity: "auto",
+                                aspectRatioToken
+                            }),
+                            focusScale: focusScaleForImage(asset, tile)
                         };
                     });
 
@@ -416,6 +483,23 @@
                         itemButtons.forEach((button) => {
                             const id = Number(button.dataset.tileId);
                             button.classList.toggle("is-focused", id === activeIndex);
+
+                            const tile = tiles.find((entry) => entry.id === id);
+                            const image = button.querySelector(".grid-thumb");
+
+                            if (!tile || !image) {
+                                return;
+                            }
+
+                            if (id === activeIndex) {
+                                image.srcset = tile.focusSrcSet;
+                                image.src = tile.focusSrc;
+                                button.style.setProperty("--focus-scale", tile.focusScale);
+                            } else {
+                                image.srcset = tile.restSrcSet;
+                                image.src = tile.restSrc;
+                                button.style.removeProperty("--focus-scale");
+                            }
                         });
                     }
 
@@ -445,8 +529,8 @@
                         thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                         thumb.loading = "lazy";
                         thumb.sizes = galleryImageSizes();
-                        thumb.srcset = cloudinarySrcSet(tile.publicId, tile.srcSetWidths);
-                        thumb.src = tile.src;
+                        thumb.srcset = tile.restSrcSet;
+                        thumb.src = tile.restSrc;
 
                         const label = document.createElement("div");
                         label.className = "tile-label";
