@@ -67,30 +67,23 @@
         }
 
         .grid-wall {
-            display: grid;
+            position: relative;
             width: 100%;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0;
-            align-items: start;
             overflow: visible;
             background: transparent;
         }
 
         .grid-item {
-            position: relative;
+            position: absolute;
             display: block;
-            width: 100%;
             appearance: none;
             padding: 0;
             border: 0;
             border-radius: 0;
             overflow: hidden;
             cursor: pointer;
-            background: #dbe9f2;
-            aspect-ratio: var(--aspect-ratio, 1);
-            box-shadow: 0 16px 36px rgba(19, 33, 47, 0.12);
-            transform-origin: center center;
-            transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease, box-shadow 260ms ease;
+            background: transparent;
+            transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1), width 340ms cubic-bezier(0.22, 1, 0.36, 1), height 340ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease;
             will-change: transform;
         }
 
@@ -114,21 +107,12 @@
 
         .grid-item.is-focused .grid-thumb {
             filter: saturate(1.05) contrast(1.08);
-            transform: scale(1.02);
-        }
-
-        .grid-item.is-focused {
-            box-shadow: 0 22px 48px rgba(19, 33, 47, 0.18);
+            transform: scale(1.01);
         }
 
         @media (max-width: 768px) {
             body {
                 padding: 14px;
-            }
-
-            .grid-wall {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 0;
             }
         }
     </style>
@@ -167,6 +151,14 @@
 
         function galleryImageSizes() {
             return "(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 220px";
+        }
+
+        function galleryColumnCount(containerWidth) {
+            if (window.matchMedia("(max-width: 768px)").matches) {
+                return 2;
+            }
+
+            return Math.max(1, Math.floor(containerWidth / 180));
         }
 
         async function fetchGalleryAssets(folder) {
@@ -221,6 +213,8 @@
 
         async function renderGridHoverGallery() {
             const gridWall = document.getElementById("grid-wall");
+            let activeIndex = -1;
+            let layoutFrame = 0;
 
             if (!cloudName) {
                 setStatus("Cloudinary cloud name is not configured. Set CLOUDINARY_CLOUD_NAME in your server environment.");
@@ -243,51 +237,75 @@
 
                 const itemButtons = [];
 
-                function clearHoverMotion() {
-                    gridWall.classList.remove("is-hovering");
-                    itemButtons.forEach((button) => {
-                        button.classList.remove("is-focused");
-                        button.style.transform = "";
-                        button.style.zIndex = "";
-                    });
+                function readAspectRatio(button) {
+                    const ratio = Number(button.dataset.aspectRatio || "1");
+                    return ratio > 0 ? ratio : 1;
                 }
 
-                function applyHoverMotion(focusIndex) {
-                    const focusedButton = itemButtons[focusIndex];
+                function layoutGallery() {
+                    const containerWidth = gridWall.clientWidth;
 
-                    if (!focusedButton) {
+                    if (!containerWidth || !itemButtons.length) {
                         return;
                     }
 
-                    const focusRect = focusedButton.getBoundingClientRect();
-                    const fx = focusRect.left + focusRect.width / 2;
-                    const fy = focusRect.top + focusRect.height / 2;
-
-                    gridWall.classList.add("is-hovering");
+                    const columnCount = galleryColumnCount(containerWidth);
+                    const columnWidth = containerWidth / columnCount;
+                    const columnHeights = Array.from({ length: columnCount }, () => 0);
 
                     itemButtons.forEach((button, index) => {
-                        if (index === focusIndex) {
-                            button.classList.add("is-focused");
-                            button.style.zIndex = "8";
-                            button.style.transform = "translate3d(0, 0, 0) scale(1.12)";
-                            return;
+                        const isFocused = index === activeIndex;
+                        const span = isFocused && columnCount > 1 ? Math.min(2, columnCount) : 1;
+                        const aspectRatio = readAspectRatio(button);
+                        let targetColumn = 0;
+                        let targetTop = Number.POSITIVE_INFINITY;
+
+                        for (let column = 0; column <= columnCount - span; column += 1) {
+                            const top = Math.max(...columnHeights.slice(column, column + span));
+
+                            if (top < targetTop) {
+                                targetTop = top;
+                                targetColumn = column;
+                            }
                         }
 
-                        button.classList.remove("is-focused");
+                        const width = columnWidth * span;
+                        const height = width / aspectRatio;
+                        const left = targetColumn * columnWidth;
+                        const nextHeight = targetTop + height;
 
-                        const rect = button.getBoundingClientRect();
-                        const bx = rect.left + rect.width / 2;
-                        const by = rect.top + rect.height / 2;
-                        const dx = bx - fx;
-                        const dy = by - fy;
-                        const distance = Math.hypot(dx, dy) || 1;
-                        const push = Math.max(8, 34 - Math.min(24, distance / 28));
-                        const tx = (dx / distance) * push;
-                        const ty = (dy / distance) * push;
+                        button.classList.toggle("is-focused", isFocused);
+                        button.style.width = `${width}px`;
+                        button.style.height = `${height}px`;
+                        button.style.transform = `translate3d(${left}px, ${targetTop}px, 0)`;
+                        button.style.zIndex = isFocused ? "8" : "1";
 
-                        button.style.zIndex = "1";
-                        button.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) scale(0.96)`;
+                        for (let column = targetColumn; column < targetColumn + span; column += 1) {
+                            columnHeights[column] = nextHeight;
+                        }
                     });
+
+                    gridWall.classList.toggle("is-hovering", activeIndex >= 0);
+                    gridWall.style.height = `${Math.max(...columnHeights, 0)}px`;
+                }
+
+                function scheduleLayout() {
+                    cancelAnimationFrame(layoutFrame);
+                    layoutFrame = requestAnimationFrame(layoutGallery);
+                }
+
+                function clearHoverMotion() {
+                    activeIndex = -1;
+                    scheduleLayout();
+                }
+
+                function applyHoverMotion(focusIndex) {
+                    if (!itemButtons[focusIndex]) {
+                        return;
+                    }
+
+                    activeIndex = focusIndex;
+                    scheduleLayout();
                 }
 
                 assets.forEach((asset, index) => {
@@ -298,7 +316,7 @@
                     button.type = "button";
                     button.className = "grid-item";
                     button.setAttribute("aria-label", `Preview image ${index + 1}`);
-                    button.style.setProperty("--aspect-ratio", String(aspectRatio));
+                    button.dataset.aspectRatio = String(aspectRatio);
 
                     const thumb = document.createElement("img");
                     thumb.className = "grid-thumb";
@@ -309,7 +327,8 @@
                     thumb.src = cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_720,dpr_auto,q_auto,f_auto");
                     thumb.addEventListener("load", () => {
                         if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
-                            button.style.setProperty("--aspect-ratio", String(thumb.naturalWidth / thumb.naturalHeight));
+                            button.dataset.aspectRatio = String(thumb.naturalWidth / thumb.naturalHeight);
+                            scheduleLayout();
                         }
                     });
 
@@ -328,6 +347,9 @@
                         clearHoverMotion();
                     }
                 });
+
+                window.addEventListener("resize", scheduleLayout);
+                scheduleLayout();
             } catch (error) {
                 setStatus(`Unable to load gallery assets: ${error.message}`);
             }
