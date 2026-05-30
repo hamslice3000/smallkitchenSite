@@ -233,7 +233,7 @@
         function cloudinarySrcSet(publicId, widths) {
             return widths
                 .map((width) => {
-                    const transform = `a_auto,c_fill,w_${width},h_${Math.round(width * 0.75)},dpr_auto,q_auto:best,f_auto`;
+                    const transform = `a_auto,c_limit,w_${width},dpr_auto,q_auto:best,f_auto`;
                     return `${cloudinaryImageUrl(publicId, transform)} ${width}w`;
                 })
                 .join(", ");
@@ -352,7 +352,7 @@
                     return {
                         ...tile,
                         publicId: asset.publicId,
-                        src: cloudinaryImageUrl(asset.publicId, "a_auto,c_fill,w_2400,h_1800,dpr_auto,q_auto:best,f_auto")
+                        src: cloudinaryImageUrl(asset.publicId, "a_auto,c_limit,w_2400,dpr_auto,q_auto:best,f_auto")
                     };
                 });
 
