@@ -1,12 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
     <script src="https://product-gallery.cloudinary.com/latest/all.js" type="text/javascript"></script>
     <script src="/config.js" type="text/javascript"></script>
     <!-- POC works in render.com -->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: Arial, sans-serif;
+            background: #fff;
+        }
+
+        #my-gallery {
+            width: min(100%, 1100px);
+            margin: 0 auto;
+            touch-action: pinch-zoom;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+
+            #my-gallery {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="my-gallery" style="max-width:80%;margin:auto"></div>
+    <div id="my-gallery"></div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const repeatedPublicId = "4BE88C41-4235-4428-B0D5-7276BFF07183_wv3srg";
