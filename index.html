@@ -294,14 +294,23 @@
             const mismatch = Math.max(imageAspect / tileAspect, tileAspect / imageAspect);
 
             if (mismatch >= 1.8) {
-                return "1.01";
+                return "1.0";
             }
 
             if (mismatch >= 1.35) {
-                return "1.03";
+                return "1.01";
             }
 
-            return "1.06";
+            return "1.03";
+        }
+
+        function focusCropModeForImage(asset, tile) {
+            const imageAspect = asset.width > 0 && asset.height > 0 ? asset.width / asset.height : 1;
+            const tileAspect = tile.colSpan / tile.rowSpan;
+            const mismatch = Math.max(imageAspect / tileAspect, tileAspect / imageAspect);
+
+            // Extreme mismatch keeps full image instead of forcing aggressive crop.
+            return mismatch >= 1.65 ? "limit" : "fill";
         }
 
         function srcSetWidthsForMax(maxWidth) {
@@ -448,6 +457,7 @@
                             ? Math.round(asset.width)
                             : 3600;
                         const aspectRatioToken = aspectRatioTokenForTile(tile);
+                        const focusCropMode = focusCropModeForImage(asset, tile);
                         const srcSetWidths = srcSetWidthsForMax(maxWidth);
 
                         return {
@@ -458,14 +468,14 @@
                             restSrc: cloudinaryBestSrc(asset.publicId, maxWidth, { cropMode: "limit" }),
                             restSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" }),
                             focusSrc: cloudinaryBestSrc(asset.publicId, maxWidth, {
-                                cropMode: "fill",
-                                gravity: "auto",
-                                aspectRatioToken
+                                cropMode: focusCropMode,
+                                gravity: focusCropMode === "fill" ? "auto" : null,
+                                aspectRatioToken: focusCropMode === "fill" ? aspectRatioToken : null
                             }),
                             focusSrcSet: cloudinarySrcSet(asset.publicId, srcSetWidths, {
-                                cropMode: "fill",
-                                gravity: "auto",
-                                aspectRatioToken
+                                cropMode: focusCropMode,
+                                gravity: focusCropMode === "fill" ? "auto" : null,
+                                aspectRatioToken: focusCropMode === "fill" ? aspectRatioToken : null
                             }),
                             focusScale: focusScaleForImage(asset, tile)
                         };
