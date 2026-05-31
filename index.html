@@ -164,32 +164,29 @@
             z-index: 3;
         }
 
-        .media-badge {
+        .video-play-prompt {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid rgba(255, 255, 255, 0.28);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: #efefef;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
             backdrop-filter: blur(8px);
-            opacity: 0.92;
+            opacity: 0.95;
+            transition: opacity 220ms ease;
             pointer-events: none;
             z-index: 3;
         }
 
-        .media-badge::before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-42%, -50%);
-            width: 0;
-            height: 0;
-            border-top: 7px solid transparent;
-            border-bottom: 7px solid transparent;
-            border-left: 11px solid #efefef;
+        .grid-item.is-video-playing .video-play-prompt {
+            opacity: 0;
         }
 
         .grid-item.is-focused .tile-label {
@@ -831,25 +828,23 @@
 
                             if (id === activeIndex) {
                                 const transformState = getTouchTransform(button);
-                                if (transformState.zoom > 1.001) {
-                                    if (tile.mediaType === "image") {
+                                if (tile.mediaType === "image") {
+                                    if (transformState.zoom > 1.001) {
                                         image.srcset = "";
-                                    }
-                                    image.src = tile.maxSrc;
-                                    image.dataset.forcedMaxRes = "1";
-                                } else {
-                                    if (tile.mediaType === "image") {
+                                        image.src = tile.maxSrc;
+                                        image.dataset.forcedMaxRes = "1";
+                                    } else {
                                         image.srcset = tile.focusSrcSet;
+                                        image.src = tile.focusSrc;
+                                        delete image.dataset.forcedMaxRes;
                                     }
-                                    image.src = tile.focusSrc;
-                                    delete image.dataset.forcedMaxRes;
                                 }
                                 button.style.setProperty("--focus-scale", tile.focusScale);
                             } else {
                                 if (tile.mediaType === "image") {
                                     image.srcset = tile.restSrcSet;
+                                    image.src = tile.restSrc;
                                 }
-                                image.src = tile.restSrc;
                                 button.style.removeProperty("--focus-scale");
                                 delete image.dataset.forcedMaxRes;
                                 resetTouchTransform(button);
@@ -943,17 +938,13 @@
 
                         applyTouchTransform(button, clamped);
 
-                        if (tile && image) {
+                        if (tile && image && tile.mediaType === "image") {
                             if (clamped.zoom > 1.001) {
-                                if (tile.mediaType === "image") {
-                                    image.srcset = "";
-                                }
+                                image.srcset = "";
                                 image.src = tile.maxSrc;
                                 image.dataset.forcedMaxRes = "1";
                             } else if (image.dataset.forcedMaxRes === "1") {
-                                if (tile.mediaType === "image") {
-                                    image.srcset = tile.focusSrcSet;
-                                }
+                                image.srcset = tile.focusSrcSet;
                                 image.src = tile.focusSrc;
                                 delete image.dataset.forcedMaxRes;
                             }
@@ -1002,26 +993,31 @@
                             thumb.preload = "metadata";
                             thumb.src = tile.restSrc;
                             thumb.setAttribute("aria-label", tile.label || displayNameFromPublicId(tile.publicId));
+
+                            const syncVideoPrompt = () => {
+                                button.classList.toggle("is-video-playing", !thumb.paused && !thumb.ended);
+                            };
+
                             thumb.addEventListener("loadedmetadata", () => {
                                 if (thumb.videoWidth > 0 && thumb.videoHeight > 0) {
                                     button.dataset.imageAspect = String(thumb.videoWidth / thumb.videoHeight);
                                 }
                             });
+                            thumb.addEventListener("play", syncVideoPrompt);
+                            thumb.addEventListener("pause", syncVideoPrompt);
+                            thumb.addEventListener("ended", syncVideoPrompt);
                             thumb.addEventListener("click", (event) => {
                                 event.preventDefault();
                                 event.stopPropagation();
                                 if (thumb.paused) {
-                                    thumb.play().catch(() => {});
+                                    thumb.play().catch(() => {
+                                        button.classList.remove("is-video-playing");
+                                    });
                                 } else {
                                     thumb.pause();
                                 }
                             });
-                            thumb.addEventListener("touchstart", () => {
-                                if (thumb.paused) {
-                                    thumb.play().catch(() => {});
-                                }
-                            }, { passive: true });
-                            thumb.play().catch(() => {});
+                            syncVideoPrompt();
                         } else {
                             thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                             thumb.loading = "lazy";
@@ -1045,10 +1041,11 @@
                             : "Unknown size";
 
                         if (tile.mediaType === "video") {
-                            const mediaBadge = document.createElement("div");
-                            mediaBadge.className = "media-badge";
-                            mediaBadge.setAttribute("aria-hidden", "true");
-                            button.appendChild(mediaBadge);
+                            const playPrompt = document.createElement("div");
+                            playPrompt.className = "video-play-prompt";
+                            playPrompt.textContent = "Click to play";
+                            playPrompt.setAttribute("aria-hidden", "true");
+                            button.appendChild(playPrompt);
                         }
 
                         button.appendChild(thumb);
@@ -1104,7 +1101,7 @@
                             applyTouchTransform(button, clamped);
 
                             const image = button.querySelector(".grid-thumb");
-                            if (image) {
+                            if (image && tile.mediaType === "image") {
                                 if (clamped.zoom > 1.001) {
                                     image.srcset = "";
                                     image.src = tile.maxSrc;
