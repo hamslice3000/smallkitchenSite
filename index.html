@@ -233,74 +233,20 @@
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const folderName = "smallkitchen";
-        const MAX_TILES_PER_GROUP = 10;
+        const MAX_TILES_PER_GROUP = 7;
         const TILE_LAYOUT_VARIANTS = [
             {
-                name: "tall-edges",
+                name: "hero-left-right-grid",
                 cols: 4,
-                rows: 3,
+                rows: 4,
                 slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 2, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 3, col: 4, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 4, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
-                ]
-            },
-            {
-                name: "tall-center",
-                cols: 4,
-                rows: 3,
-                slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 3, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 4, col: 1, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
-                ]
-            },
-            {
-                name: "tall-left",
-                cols: 4,
-                rows: 3,
-                slots: [
-                    { id: 0, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 1, col: 4, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 3, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 4, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
-                ]
-            },
-            {
-                name: "tall-right",
-                cols: 4,
-                rows: 3,
-                slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 1, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 3, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 4, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
+                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Hero" },
+                    { id: 1, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Left Lower 1" },
+                    { id: 2, col: 1, row: 4, colSpan: 2, rowSpan: 1, label: "Left Lower 2" },
+                    { id: 3, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Grid TL" },
+                    { id: 4, col: 4, row: 1, colSpan: 1, rowSpan: 2, label: "Grid TR" },
+                    { id: 5, col: 3, row: 3, colSpan: 1, rowSpan: 2, label: "Grid BL" },
+                    { id: 6, col: 4, row: 3, colSpan: 1, rowSpan: 2, label: "Grid BR" }
                 ]
             }
         ];
