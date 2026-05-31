@@ -1,5 +1,21 @@
 # smallkitchenSite
 
+## Functional Milestone: Stage MVP
+
+Date: 2026-05-31
+
+This build is flagged as the current functional MVP baseline.
+
+Included in this milestone:
+
+- Layout and slot assignment logic with hero-focused presentation.
+- Mixed media slots with Cloudinary image and video support.
+- Video playback in-grid (click to play/pause with visual play prompt).
+- Desktop and mobile interactions (hover focus, drag pan, wheel zoom, touch pinch/pan).
+- Server-side large media pool caching with warm-start + background refresh for faster initial loads.
+
+Use this milestone as the stable reference point for future incremental changes.
+
 ## Deploy on Render from GitHub
 
 Yes, this can run on Render using your GitHub repo.
