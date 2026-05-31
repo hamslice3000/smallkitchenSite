@@ -532,6 +532,19 @@
             return groups;
         }
 
+        function shuffleAssets(assets) {
+            const shuffled = assets.slice();
+
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                const temp = shuffled[index];
+                shuffled[index] = shuffled[swapIndex];
+                shuffled[swapIndex] = temp;
+            }
+
+            return shuffled;
+        }
+
         async function fetchGalleryAssets(folder) {
             const response = await fetch(`/gallery-assets?folder=${encodeURIComponent(folder)}`);
 
@@ -604,7 +617,9 @@
                     setStatus(`Using fallback folder: ${folderUsed}`);
                 }
 
-                const groups = chunkAssets(assets, MAX_TILES_PER_GROUP);
+                const randomizedAssets = shuffleAssets(assets);
+                const firstGroup = randomizedAssets.slice(0, MAX_TILES_PER_GROUP);
+                const groups = firstGroup.length ? [firstGroup] : [];
                 gridStack.innerHTML = "";
                 let globalMouseDragButton = null;
 
