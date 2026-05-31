@@ -9,6 +9,7 @@ const CLOUDINARY_PAGE_SIZE = Math.min(500, Number(process.env.CLOUDINARY_PAGE_SI
 const GALLERY_RETURN_LIMIT_DEFAULT = Number(process.env.GALLERY_RETURN_LIMIT_DEFAULT) || 36;
 const GALLERY_RETURN_LIMIT_MAX = Number(process.env.GALLERY_RETURN_LIMIT_MAX) || 100;
 const GALLERY_CACHE_TTL_MS = Number(process.env.GALLERY_CACHE_TTL_MS) || 5 * 60 * 1000;
+const GALLERY_WARM_POOL_MIN = Number(process.env.GALLERY_WARM_POOL_MIN) || 60;
 
 const folderCache = new Map();
 
@@ -83,21 +84,69 @@ async function fetchCloudinaryFolderAssets(folderName, limit = CLOUDINARY_POOL_L
     return resources.slice(0, limit);
 }
 
-async function getFolderPool(folderName) {
-    const now = Date.now();
-    const cached = folderCache.get(folderName);
-
-    if (cached && now - cached.fetchedAt < GALLERY_CACHE_TTL_MS) {
-        return cached.resources;
+function getOrCreateCacheEntry(folderName) {
+    const existing = folderCache.get(folderName);
+    if (existing) {
+        return existing;
     }
 
-    const resources = await fetchCloudinaryFolderAssets(folderName, CLOUDINARY_POOL_LIMIT);
-    folderCache.set(folderName, {
-        fetchedAt: now,
-        resources
-    });
+    const created = {
+        fetchedAt: 0,
+        resources: [],
+        refreshPromise: null
+    };
 
-    return resources;
+    folderCache.set(folderName, created);
+    return created;
+}
+
+function schedulePoolRefresh(folderName) {
+    const entry = getOrCreateCacheEntry(folderName);
+    if (entry.refreshPromise) {
+        return entry.refreshPromise;
+    }
+
+    entry.refreshPromise = (async () => {
+        const resources = await fetchCloudinaryFolderAssets(folderName, CLOUDINARY_POOL_LIMIT);
+        entry.resources = resources;
+        entry.fetchedAt = Date.now();
+    })()
+        .catch((error) => {
+            // Keep stale cache data if refresh fails.
+            console.error(`Pool refresh failed for folder '${folderName}':`, error.message);
+        })
+        .finally(() => {
+            entry.refreshPromise = null;
+        });
+
+    return entry.refreshPromise;
+}
+
+async function getFolderPoolFast(folderName, requestedLimit) {
+    const now = Date.now();
+    const entry = getOrCreateCacheEntry(folderName);
+    const isFresh = entry.resources.length > 0 && now - entry.fetchedAt < GALLERY_CACHE_TTL_MS;
+
+    if (isFresh) {
+        return entry.resources;
+    }
+
+    if (entry.resources.length > 0) {
+        schedulePoolRefresh(folderName);
+        return entry.resources;
+    }
+
+    const warmPoolTarget = Math.max(GALLERY_WARM_POOL_MIN, requestedLimit * 2);
+    const warmResources = await fetchCloudinaryFolderAssets(folderName, Math.min(warmPoolTarget, CLOUDINARY_POOL_LIMIT));
+    entry.resources = warmResources;
+    entry.fetchedAt = Date.now();
+
+    if (warmResources.length < CLOUDINARY_POOL_LIMIT) {
+        return entry.resources;
+    }
+
+    schedulePoolRefresh(folderName);
+    return entry.resources;
 }
 
 app.get("/health", (_req, res) => {
@@ -115,7 +164,7 @@ app.get("/gallery-assets", async (req, res) => {
     const requestedLimit = parseRequestedLimit(req.query.limit);
 
     try {
-        const resources = await getFolderPool(folderName);
+        const resources = await getFolderPoolFast(folderName, requestedLimit);
         const selectedResources = pickRandomSubset(resources, requestedLimit);
 
         res.json({
@@ -144,4 +193,5 @@ app.use(express.static(path.join(__dirname)));
 
 app.listen(port, () => {
     console.log(`smallkitchenSite listening on port ${port}`);
+    schedulePoolRefresh("smallkitchen");
 });
