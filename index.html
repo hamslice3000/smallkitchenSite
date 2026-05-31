@@ -468,6 +468,7 @@
                             sourceWidth: Number.isFinite(asset.width) ? Math.round(asset.width) : null,
                             sourceHeight: Number.isFinite(asset.height) ? Math.round(asset.height) : null,
                             maxWidth,
+                            maxSrc: fullSrc,
                             srcSetWidths,
                             restSrc: fullSrc,
                             restSrcSet: fullSrcSet,
@@ -561,13 +562,22 @@
                             }
 
                             if (id === activeIndex) {
-                                image.srcset = tile.focusSrcSet;
-                                image.src = tile.focusSrc;
+                                const transformState = getTouchTransform(button);
+                                if (transformState.zoom > 1.001) {
+                                    image.srcset = "";
+                                    image.src = tile.maxSrc;
+                                    image.dataset.forcedMaxRes = "1";
+                                } else {
+                                    image.srcset = tile.focusSrcSet;
+                                    image.src = tile.focusSrc;
+                                    delete image.dataset.forcedMaxRes;
+                                }
                                 button.style.setProperty("--focus-scale", tile.focusScale);
                             } else {
                                 image.srcset = tile.restSrcSet;
                                 image.src = tile.restSrc;
                                 button.style.removeProperty("--focus-scale");
+                                delete image.dataset.forcedMaxRes;
                                 resetTouchTransform(button);
                             }
                         });
@@ -637,6 +647,8 @@
                     function handleWheelZoom(button, tileId, event) {
                         applyHoverMotion(tileId);
 
+                        const tile = tiles.find((entry) => entry.id === tileId);
+                        const image = button.querySelector(".grid-thumb");
                         const currentTransform = getTouchTransform(button);
                         const zoomFactor = Math.exp(-event.deltaY * 0.0015);
                         const nextZoom = Math.max(1, Math.min(4, currentTransform.zoom * zoomFactor));
@@ -648,6 +660,19 @@
                         });
 
                         applyTouchTransform(button, clamped);
+
+                        if (tile && image) {
+                            if (clamped.zoom > 1.001) {
+                                image.srcset = "";
+                                image.src = tile.maxSrc;
+                                image.dataset.forcedMaxRes = "1";
+                            } else if (image.dataset.forcedMaxRes === "1") {
+                                image.srcset = tile.focusSrcSet;
+                                image.src = tile.focusSrc;
+                                delete image.dataset.forcedMaxRes;
+                            }
+                        }
+
                         event.preventDefault();
                     }
 
@@ -733,6 +758,20 @@
                             });
 
                             applyTouchTransform(button, clamped);
+
+                            const image = button.querySelector(".grid-thumb");
+                            if (image) {
+                                if (clamped.zoom > 1.001) {
+                                    image.srcset = "";
+                                    image.src = tile.maxSrc;
+                                    image.dataset.forcedMaxRes = "1";
+                                } else if (image.dataset.forcedMaxRes === "1") {
+                                    image.srcset = tile.focusSrcSet;
+                                    image.src = tile.focusSrc;
+                                    delete image.dataset.forcedMaxRes;
+                                }
+                            }
+
                             event.preventDefault();
                         }, { passive: false });
 
