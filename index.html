@@ -115,6 +115,7 @@
             cursor: pointer;
             background: #0b0b0b;
             isolation: isolate;
+            touch-action: manipulation;
             transition: transform 700ms cubic-bezier(.16, 1, .3, 1), z-index 0s linear;
         }
 
@@ -131,6 +132,10 @@
             object-fit: cover;
             object-position: center center;
             display: block;
+            --touch-pan-x: 0px;
+            --touch-pan-y: 0px;
+            --touch-zoom: 1;
+            transform: translate3d(var(--touch-pan-x), var(--touch-pan-y), 0) scale(var(--touch-zoom));
             transition: transform 700ms cubic-bezier(.16, 1, .3, 1), filter 700ms cubic-bezier(.16, 1, .3, 1);
         }
 
@@ -169,13 +174,18 @@
         }
 
         .grid-item.is-focused .grid-thumb {
-            transform: scale(var(--focus-scale, 1.06));
+            transform: translate3d(var(--touch-pan-x), var(--touch-pan-y), 0) scale(calc(var(--focus-scale, 1.06) * var(--touch-zoom)));
             filter: saturate(1.25);
         }
 
         .grid-item.is-focused {
             z-index: 20;
             transform: scale(1.015);
+            touch-action: none;
+        }
+
+        .grid-item.is-touch-gesturing .grid-thumb {
+            transition: none;
         }
 
         @media (max-width: 768px) {
@@ -484,6 +494,68 @@
 
                     let activeIndex = -1;
                     const itemButtons = [];
+                    let touchGestureState = null;
+
+                    function getTouchTransform(button) {
+                        const image = button.querySelector(".grid-thumb");
+                        if (!image) {
+                            return { zoom: 1, panX: 0, panY: 0 };
+                        }
+
+                        const zoom = Number(image.dataset.touchZoom || "1");
+                        const panX = Number(image.dataset.touchPanX || "0");
+                        const panY = Number(image.dataset.touchPanY || "0");
+
+                        return {
+                            zoom: Number.isFinite(zoom) ? zoom : 1,
+                            panX: Number.isFinite(panX) ? panX : 0,
+                            panY: Number.isFinite(panY) ? panY : 0
+                        };
+                    }
+
+                    function applyTouchTransform(button, transform) {
+                        const image = button.querySelector(".grid-thumb");
+                        if (!image) {
+                            return;
+                        }
+
+                        image.dataset.touchZoom = String(transform.zoom);
+                        image.dataset.touchPanX = String(transform.panX);
+                        image.dataset.touchPanY = String(transform.panY);
+                        image.style.setProperty("--touch-zoom", String(transform.zoom));
+                        image.style.setProperty("--touch-pan-x", `${transform.panX.toFixed(2)}px`);
+                        image.style.setProperty("--touch-pan-y", `${transform.panY.toFixed(2)}px`);
+                    }
+
+                    function resetTouchTransform(button) {
+                        applyTouchTransform(button, { zoom: 1, panX: 0, panY: 0 });
+                        button.classList.remove("is-touch-gesturing");
+                    }
+
+                    function touchDistance(firstTouch, secondTouch) {
+                        return Math.hypot(secondTouch.clientX - firstTouch.clientX, secondTouch.clientY - firstTouch.clientY);
+                    }
+
+                    function touchCenter(firstTouch, secondTouch) {
+                        return {
+                            x: (firstTouch.clientX + secondTouch.clientX) / 2,
+                            y: (firstTouch.clientY + secondTouch.clientY) / 2
+                        };
+                    }
+
+                    function clampPan(button, transform) {
+                        const rect = button.getBoundingClientRect();
+                        const focusScale = Number(button.style.getPropertyValue("--focus-scale") || "1.03") || 1.03;
+                        const effectiveScale = Math.max(1, focusScale * transform.zoom);
+                        const maxPanX = ((effectiveScale - 1) * rect.width) / 2;
+                        const maxPanY = ((effectiveScale - 1) * rect.height) / 2;
+
+                        return {
+                            zoom: transform.zoom,
+                            panX: Math.max(-maxPanX, Math.min(maxPanX, transform.panX)),
+                            panY: Math.max(-maxPanY, Math.min(maxPanY, transform.panY))
+                        };
+                    }
 
                     function updateGridState() {
                         const hoveredTile = tiles.find((tile) => tile.id === activeIndex) || null;
@@ -510,12 +582,14 @@
                                 image.srcset = tile.restSrcSet;
                                 image.src = tile.restSrc;
                                 button.style.removeProperty("--focus-scale");
+                                resetTouchTransform(button);
                             }
                         });
                     }
 
                     function clearHoverMotion() {
                         activeIndex = -1;
+                        touchGestureState = null;
                         updateGridState();
                     }
 
@@ -551,6 +625,80 @@
                         button.appendChild(label);
                         button.addEventListener("mouseenter", () => applyHoverMotion(tile.id));
                         button.addEventListener("focus", () => applyHoverMotion(tile.id));
+                        button.addEventListener("touchstart", (event) => {
+                            if (event.touches.length === 1) {
+                                applyHoverMotion(tile.id);
+                                return;
+                            }
+
+                            if (event.touches.length === 2) {
+                                applyHoverMotion(tile.id);
+                                const [firstTouch, secondTouch] = event.touches;
+                                const startTransform = getTouchTransform(button);
+                                touchGestureState = {
+                                    tileId: tile.id,
+                                    startDistance: touchDistance(firstTouch, secondTouch),
+                                    startCenter: touchCenter(firstTouch, secondTouch),
+                                    startZoom: startTransform.zoom,
+                                    startPanX: startTransform.panX,
+                                    startPanY: startTransform.panY
+                                };
+                                button.classList.add("is-touch-gesturing");
+                                event.preventDefault();
+                            }
+                        }, { passive: false });
+
+                        button.addEventListener("touchmove", (event) => {
+                            if (!touchGestureState || touchGestureState.tileId !== tile.id || event.touches.length !== 2) {
+                                return;
+                            }
+
+                            const [firstTouch, secondTouch] = event.touches;
+                            const nextDistance = touchDistance(firstTouch, secondTouch);
+                            const nextCenter = touchCenter(firstTouch, secondTouch);
+                            const distanceRatio = touchGestureState.startDistance > 0
+                                ? nextDistance / touchGestureState.startDistance
+                                : 1;
+                            const nextZoom = Math.max(1, Math.min(3, touchGestureState.startZoom * distanceRatio));
+                            const nextPanX = touchGestureState.startPanX + (nextCenter.x - touchGestureState.startCenter.x);
+                            const nextPanY = touchGestureState.startPanY + (nextCenter.y - touchGestureState.startCenter.y);
+                            const clamped = clampPan(button, {
+                                zoom: nextZoom,
+                                panX: nextPanX,
+                                panY: nextPanY
+                            });
+
+                            applyTouchTransform(button, clamped);
+                            event.preventDefault();
+                        }, { passive: false });
+
+                        button.addEventListener("touchend", (event) => {
+                            if (!touchGestureState || touchGestureState.tileId !== tile.id) {
+                                return;
+                            }
+
+                            if (event.touches.length >= 2) {
+                                const [firstTouch, secondTouch] = event.touches;
+                                const currentTransform = getTouchTransform(button);
+                                touchGestureState = {
+                                    tileId: tile.id,
+                                    startDistance: touchDistance(firstTouch, secondTouch),
+                                    startCenter: touchCenter(firstTouch, secondTouch),
+                                    startZoom: currentTransform.zoom,
+                                    startPanX: currentTransform.panX,
+                                    startPanY: currentTransform.panY
+                                };
+                                return;
+                            }
+
+                            button.classList.remove("is-touch-gesturing");
+                            touchGestureState = null;
+                        });
+
+                        button.addEventListener("touchcancel", () => {
+                            button.classList.remove("is-touch-gesturing");
+                            touchGestureState = null;
+                        });
 
                         itemButtons.push(button);
                         gridWall.appendChild(button);
