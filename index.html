@@ -245,10 +245,7 @@
                     { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 4, label: "Hero" },
                     { id: 1, col: 1, row: 5, colSpan: 1, rowSpan: 2, label: "Left Lower 1" },
                     { id: 2, col: 2, row: 5, colSpan: 1, rowSpan: 2, label: "Left Lower 2" },
-                    { id: 3, col: 3, row: 1, colSpan: 1, rowSpan: 3, label: "Grid TL" },
-                    { id: 4, col: 4, row: 1, colSpan: 1, rowSpan: 3, label: "Grid TR" },
-                    { id: 5, col: 3, row: 4, colSpan: 1, rowSpan: 3, label: "Grid BL" },
-                    { id: 6, col: 4, row: 4, colSpan: 1, rowSpan: 3, label: "Grid BR" }
+                    { id: 3, col: 3, row: 1, colSpan: 2, rowSpan: 6, label: "Right Portrait" }
                 ]
             }
         ];
@@ -410,6 +407,10 @@
             return /^Left Lower\s/i.test(slot.label || "");
         }
 
+        function isRightPortraitSlot(slot) {
+            return /^Right Portrait\s/i.test(slot.label || "");
+        }
+
         function fitScore(asset, slot) {
             const ratio = imageAspect(asset) / slotAspect(slot);
             let score = Math.abs(Math.log(Math.max(0.0001, ratio)));
@@ -439,6 +440,14 @@
                     score -= 0.35;
                 } else {
                     score += 2.1 + Math.max(0, 1.08 - imgAspect) * 1.2;
+                }
+            }
+
+            if (isRightPortraitSlot(slot)) {
+                if (imgAspect < 0.82) {
+                    score -= 0.6;
+                } else {
+                    score += 2.8 + Math.max(0, imgAspect - 0.82) * 2.1;
                 }
             }
 
