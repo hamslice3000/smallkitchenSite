@@ -169,20 +169,29 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            padding: 9px 14px;
-            border-radius: 999px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             background: rgba(0, 0, 0, 0.58);
             border: 1px solid rgba(255, 255, 255, 0.24);
-            color: #efefef;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            white-space: nowrap;
             backdrop-filter: blur(8px);
             opacity: 0.95;
             transition: opacity 220ms ease;
             pointer-events: none;
             z-index: 3;
+        }
+
+        .video-play-prompt::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-38%, -50%);
+            width: 0;
+            height: 0;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 14px solid #efefef;
         }
 
         .grid-item.is-video-playing .video-play-prompt {
@@ -1043,7 +1052,6 @@
                         if (tile.mediaType === "video") {
                             const playPrompt = document.createElement("div");
                             playPrompt.className = "video-play-prompt";
-                            playPrompt.textContent = "Click to play";
                             playPrompt.setAttribute("aria-hidden", "true");
                             button.appendChild(playPrompt);
                         }
