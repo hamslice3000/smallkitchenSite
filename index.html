@@ -531,31 +531,32 @@
                     }
 
                     function clampPan(button, transform) {
-                        const rect = button.getBoundingClientRect();
+                        const frameWidth = Math.max(1, button.clientWidth);
+                        const frameHeight = Math.max(1, button.clientHeight);
                         const focusScale = Number(button.style.getPropertyValue("--focus-scale") || "1.03") || 1.03;
                         const effectiveScale = Math.max(1, focusScale * transform.zoom);
                         const imageAspect = Number(button.dataset.imageAspect || "0");
                         const safeImageAspect = Number.isFinite(imageAspect) && imageAspect > 0
                             ? imageAspect
-                            : rect.width / Math.max(1, rect.height);
-                        const tileAspect = rect.width / Math.max(1, rect.height);
+                            : frameWidth / frameHeight;
+                        const tileAspect = frameWidth / frameHeight;
 
-                        let coverWidth = rect.width;
-                        let coverHeight = rect.height;
+                        let coverWidth = frameWidth;
+                        let coverHeight = frameHeight;
 
                         if (safeImageAspect > tileAspect) {
-                            coverWidth = rect.height * safeImageAspect;
-                            coverHeight = rect.height;
+                            coverWidth = frameHeight * safeImageAspect;
+                            coverHeight = frameHeight;
                         } else {
-                            coverWidth = rect.width;
-                            coverHeight = rect.width / safeImageAspect;
+                            coverWidth = frameWidth;
+                            coverHeight = frameWidth / safeImageAspect;
                         }
 
                         const renderedWidth = coverWidth * effectiveScale;
                         const renderedHeight = coverHeight * effectiveScale;
                         const edgeSafetyPx = 1.5;
-                        const maxPanX = Math.max(0, (renderedWidth - rect.width) / 2 - edgeSafetyPx);
-                        const maxPanY = Math.max(0, (renderedHeight - rect.height) / 2 - edgeSafetyPx);
+                        const maxPanX = Math.max(0, (renderedWidth - frameWidth) / 2 - edgeSafetyPx);
+                        const maxPanY = Math.max(0, (renderedHeight - frameHeight) / 2 - edgeSafetyPx);
 
                         return {
                             zoom: transform.zoom,
