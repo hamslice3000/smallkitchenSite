@@ -236,71 +236,71 @@
         const MAX_TILES_PER_GROUP = 10;
         const TILE_LAYOUT_VARIANTS = [
             {
-                name: "classic-10",
+                name: "tall-edges",
                 cols: 4,
-                rows: 4,
+                rows: 3,
                 slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Hero" },
-                    { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 3, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 4, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 5, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
+                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 2, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 3, col: 4, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 4, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             },
             {
-                name: "mirror-10",
+                name: "tall-center",
                 cols: 4,
-                rows: 4,
+                rows: 3,
                 slots: [
-                    { id: 0, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Hero" },
+                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
                     { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 3, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 4, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 5, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
+                    { id: 2, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 3, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 4, col: 1, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             },
             {
-                name: "hero-wide",
+                name: "tall-left",
                 cols: 4,
-                rows: 4,
+                rows: 3,
                 slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 3, rowSpan: 2, label: "Hero" },
-                    { id: 1, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 2, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 3, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 4, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
+                    { id: 0, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 1, col: 4, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 2, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 3, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 4, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             },
             {
-                name: "hero-tall",
+                name: "tall-right",
                 cols: 4,
-                rows: 4,
+                rows: 3,
                 slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 3, label: "Hero" },
-                    { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 3, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 4, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
+                    { id: 0, col: 1, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 1, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 2, col: 2, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 3, col: 3, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 4, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 3, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             }
         ];
