@@ -164,6 +164,34 @@
             z-index: 3;
         }
 
+        .media-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            backdrop-filter: blur(8px);
+            opacity: 0.92;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .media-badge::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-42%, -50%);
+            width: 0;
+            height: 0;
+            border-top: 7px solid transparent;
+            border-bottom: 7px solid transparent;
+            border-left: 11px solid #efefef;
+        }
+
         .grid-item.is-focused .tile-label {
             opacity: 1;
             transform: translateY(0);
@@ -259,14 +287,19 @@
                 .join("/");
         }
 
+        function cloudinaryAssetUrl(publicId, transform, resourceType = "image") {
+            return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${transform}/${encodePublicId(publicId)}`;
+        }
+
         function cloudinaryImageUrl(publicId, transform) {
-            return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${encodePublicId(publicId)}`;
+            return cloudinaryAssetUrl(publicId, transform, "image");
         }
 
         function cloudinarySrcSet(publicId, widths, options = {}) {
             const cropMode = options.cropMode || "limit";
             const aspectRatioToken = options.aspectRatioToken || null;
             const gravity = options.gravity || null;
+            const resourceType = options.resourceType || "image";
 
             return widths
                 .map((width) => {
@@ -282,7 +315,7 @@
 
                     transforms.push(`w_${width}`, "dpr_auto", "q_auto:best", "f_auto");
                     const transform = transforms.join(",");
-                    return `${cloudinaryImageUrl(publicId, transform)} ${width}w`;
+                        return `${cloudinaryAssetUrl(publicId, transform, resourceType)} ${width}w`;
                 })
                 .join(", ");
         }
@@ -291,6 +324,7 @@
             const cropMode = options.cropMode || "limit";
             const aspectRatioToken = options.aspectRatioToken || null;
             const gravity = options.gravity || null;
+                    const resourceType = options.resourceType || "image";
             const transforms = ["a_auto", `c_${cropMode}`];
 
             if (gravity) {
@@ -302,7 +336,7 @@
             }
 
             transforms.push(`w_${maxWidth}`, "dpr_auto", "q_auto:best", "f_auto");
-            return cloudinaryImageUrl(publicId, transforms.join(","));
+            return cloudinaryAssetUrl(publicId, transforms.join(","), resourceType);
         }
 
         function aspectRatioTokenForTile(tile) {
@@ -584,7 +618,9 @@
                 .map((resource) => ({
                     publicId: resource && resource.public_id,
                     width: Number(resource && resource.width),
-                    height: Number(resource && resource.height)
+                    height: Number(resource && resource.height),
+                    resourceType: resource && resource.resource_type,
+                    format: resource && resource.format
                 }))
                 .filter((asset) => typeof asset.publicId === "string" && asset.publicId.length > 0)
                 .slice(0, 36);
@@ -658,14 +694,25 @@
                     const layoutChoice = chooseLayoutForGroup(group);
                     const tiles = layoutChoice.pairs
                         .map(({ asset, slot }) => {
+                        const mediaType = asset.resourceType === "video" ? "video" : "image";
                         const maxWidth = maxWidthForTile(asset, slot);
                         const srcSetWidths = srcSetWidthsForMax(maxWidth);
-                        const fullSrc = cloudinaryBestSrc(asset.publicId, maxWidth, { cropMode: "limit" });
-                        const fullSrcSet = cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" });
+                        const fullSrc = cloudinaryBestSrc(asset.publicId, maxWidth, {
+                            cropMode: "limit",
+                            resourceType: mediaType
+                        });
+                        const fullSrcSet = mediaType === "image"
+                            ? cloudinarySrcSet(asset.publicId, srcSetWidths, {
+                                cropMode: "limit",
+                                resourceType: mediaType
+                            })
+                            : "";
 
                         return {
                             ...slot,
                             publicId: asset.publicId,
+                            mediaType,
+                            format: asset.format,
                             sourceWidth: Number.isFinite(asset.width) ? Math.round(asset.width) : null,
                             sourceHeight: Number.isFinite(asset.height) ? Math.round(asset.height) : null,
                             maxWidth,
@@ -785,17 +832,23 @@
                             if (id === activeIndex) {
                                 const transformState = getTouchTransform(button);
                                 if (transformState.zoom > 1.001) {
-                                    image.srcset = "";
+                                    if (tile.mediaType === "image") {
+                                        image.srcset = "";
+                                    }
                                     image.src = tile.maxSrc;
                                     image.dataset.forcedMaxRes = "1";
                                 } else {
-                                    image.srcset = tile.focusSrcSet;
+                                    if (tile.mediaType === "image") {
+                                        image.srcset = tile.focusSrcSet;
+                                    }
                                     image.src = tile.focusSrc;
                                     delete image.dataset.forcedMaxRes;
                                 }
                                 button.style.setProperty("--focus-scale", tile.focusScale);
                             } else {
-                                image.srcset = tile.restSrcSet;
+                                if (tile.mediaType === "image") {
+                                    image.srcset = tile.restSrcSet;
+                                }
                                 image.src = tile.restSrc;
                                 button.style.removeProperty("--focus-scale");
                                 delete image.dataset.forcedMaxRes;
@@ -892,11 +945,15 @@
 
                         if (tile && image) {
                             if (clamped.zoom > 1.001) {
-                                image.srcset = "";
+                                if (tile.mediaType === "image") {
+                                    image.srcset = "";
+                                }
                                 image.src = tile.maxSrc;
                                 image.dataset.forcedMaxRes = "1";
                             } else if (image.dataset.forcedMaxRes === "1") {
-                                image.srcset = tile.focusSrcSet;
+                                if (tile.mediaType === "image") {
+                                    image.srcset = tile.focusSrcSet;
+                                }
                                 image.src = tile.focusSrc;
                                 delete image.dataset.forcedMaxRes;
                             }
@@ -932,28 +989,67 @@
                             button.dataset.imageAspect = String(tile.sourceWidth / tile.sourceHeight);
                         }
 
-                        const thumb = document.createElement("img");
+                        const thumb = tile.mediaType === "video"
+                            ? document.createElement("video")
+                            : document.createElement("img");
                         thumb.className = "grid-thumb";
-                        thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                         thumb.draggable = false;
-                        thumb.loading = "lazy";
-                        thumb.sizes = galleryImageSizes(tile);
-                        if (isHeroSlot(tile)) {
-                            thumb.fetchPriority = "high";
-                        }
-                        thumb.srcset = tile.restSrcSet;
-                        thumb.src = tile.restSrc;
-                        thumb.addEventListener("load", () => {
-                            if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
-                                button.dataset.imageAspect = String(thumb.naturalWidth / thumb.naturalHeight);
+
+                        if (tile.mediaType === "video") {
+                            thumb.muted = true;
+                            thumb.loop = true;
+                            thumb.playsInline = true;
+                            thumb.preload = "metadata";
+                            thumb.src = tile.restSrc;
+                            thumb.setAttribute("aria-label", tile.label || displayNameFromPublicId(tile.publicId));
+                            thumb.addEventListener("loadedmetadata", () => {
+                                if (thumb.videoWidth > 0 && thumb.videoHeight > 0) {
+                                    button.dataset.imageAspect = String(thumb.videoWidth / thumb.videoHeight);
+                                }
+                            });
+                            thumb.addEventListener("click", (event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                if (thumb.paused) {
+                                    thumb.play().catch(() => {});
+                                } else {
+                                    thumb.pause();
+                                }
+                            });
+                            thumb.addEventListener("touchstart", () => {
+                                if (thumb.paused) {
+                                    thumb.play().catch(() => {});
+                                }
+                            }, { passive: true });
+                            thumb.play().catch(() => {});
+                        } else {
+                            thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
+                            thumb.loading = "lazy";
+                            thumb.sizes = galleryImageSizes(tile);
+                            if (isHeroSlot(tile)) {
+                                thumb.fetchPriority = "high";
                             }
-                        });
+                            thumb.srcset = tile.restSrcSet;
+                            thumb.src = tile.restSrc;
+                            thumb.addEventListener("load", () => {
+                                if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
+                                    button.dataset.imageAspect = String(thumb.naturalWidth / thumb.naturalHeight);
+                                }
+                            });
+                        }
 
                         const label = document.createElement("div");
                         label.className = "tile-label";
                         label.textContent = tile.sourceWidth && tile.sourceHeight
-                            ? `${tile.sourceWidth} x ${tile.sourceHeight}`
+                            ? `${tile.sourceWidth} x ${tile.sourceHeight}${tile.mediaType === "video" ? " video" : ""}`
                             : "Unknown size";
+
+                        if (tile.mediaType === "video") {
+                            const mediaBadge = document.createElement("div");
+                            mediaBadge.className = "media-badge";
+                            mediaBadge.setAttribute("aria-hidden", "true");
+                            button.appendChild(mediaBadge);
+                        }
 
                         button.appendChild(thumb);
                         button.appendChild(label);

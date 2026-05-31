@@ -4,31 +4,100 @@ const path = require("path");
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
-async function fetchCloudinaryFolderAssets(folderName) {
+const CLOUDINARY_POOL_LIMIT = Number(process.env.CLOUDINARY_POOL_LIMIT) || 1800;
+const CLOUDINARY_PAGE_SIZE = Math.min(500, Number(process.env.CLOUDINARY_PAGE_SIZE) || 500);
+const GALLERY_RETURN_LIMIT_DEFAULT = Number(process.env.GALLERY_RETURN_LIMIT_DEFAULT) || 36;
+const GALLERY_RETURN_LIMIT_MAX = Number(process.env.GALLERY_RETURN_LIMIT_MAX) || 100;
+const GALLERY_CACHE_TTL_MS = Number(process.env.GALLERY_CACHE_TTL_MS) || 5 * 60 * 1000;
+
+const folderCache = new Map();
+
+function pickRandomSubset(items, count) {
+    const limit = Math.max(0, Math.min(count, items.length));
+    const shuffled = items.slice();
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        const temp = shuffled[index];
+        shuffled[index] = shuffled[swapIndex];
+        shuffled[swapIndex] = temp;
+    }
+
+    return shuffled.slice(0, limit);
+}
+
+function parseRequestedLimit(rawValue) {
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return GALLERY_RETURN_LIMIT_DEFAULT;
+    }
+
+    return Math.min(Math.floor(parsed), GALLERY_RETURN_LIMIT_MAX);
+}
+
+async function fetchCloudinaryFolderAssets(folderName, limit = CLOUDINARY_POOL_LIMIT) {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    const maxResults = 36;
 
     if (!cloudName || !apiKey || !apiSecret) {
         throw new Error("Missing Cloudinary environment variables.");
     }
-
-    const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/by_asset_folder?asset_folder=${encodeURIComponent(folderName)}&max_results=${maxResults}`;
     const authorization = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
 
-    const response = await fetch(url, {
-        headers: {
-            Authorization: `Basic ${authorization}`,
-            Accept: "application/json"
-        }
-    });
+    const resources = [];
+    let nextCursor = null;
 
-    if (!response.ok) {
-        throw new Error(`Cloudinary asset lookup failed with status ${response.status}`);
+    while (resources.length < limit) {
+        const params = new URLSearchParams({
+            asset_folder: folderName,
+            max_results: String(Math.min(CLOUDINARY_PAGE_SIZE, limit - resources.length))
+        });
+
+        if (nextCursor) {
+            params.set("next_cursor", nextCursor);
+        }
+
+        const url = `https://api.cloudinary.com/v1_1/${cloudName}/resources/by_asset_folder?${params.toString()}`;
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Basic ${authorization}`,
+                Accept: "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Cloudinary asset lookup failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const batch = Array.isArray(payload.resources) ? payload.resources : [];
+        resources.push(...batch);
+
+        nextCursor = payload.next_cursor || null;
+        if (!nextCursor || batch.length === 0) {
+            break;
+        }
     }
 
-    return response.json();
+    return resources.slice(0, limit);
+}
+
+async function getFolderPool(folderName) {
+    const now = Date.now();
+    const cached = folderCache.get(folderName);
+
+    if (cached && now - cached.fetchedAt < GALLERY_CACHE_TTL_MS) {
+        return cached.resources;
+    }
+
+    const resources = await fetchCloudinaryFolderAssets(folderName, CLOUDINARY_POOL_LIMIT);
+    folderCache.set(folderName, {
+        fetchedAt: now,
+        resources
+    });
+
+    return resources;
 }
 
 app.get("/health", (_req, res) => {
@@ -43,14 +112,16 @@ app.get("/config.js", (_req, res) => {
 
 app.get("/gallery-assets", async (req, res) => {
     const folderName = String(req.query.folder || "smallkitchen");
+    const requestedLimit = parseRequestedLimit(req.query.limit);
 
     try {
-        const payload = await fetchCloudinaryFolderAssets(folderName);
-        const resources = Array.isArray(payload.resources) ? payload.resources : [];
-        const selectedResources = resources.slice(0, 36);
+        const resources = await getFolderPool(folderName);
+        const selectedResources = pickRandomSubset(resources, requestedLimit);
 
         res.json({
             folder: folderName,
+            pool_size: resources.length,
+            selected_count: selectedResources.length,
             resources: selectedResources.map((resource) => ({
                 public_id: resource.public_id,
                 width: resource.width,
