@@ -233,13 +233,52 @@
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const folderName = "smallkitchen";
-        const TILE_LAYOUT = [
-            { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Portrait" },
-            { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Figure" },
-            { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Hands" },
-            { id: 3, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Reach" },
-            { id: 4, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Sky" },
-            { id: 5, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Landscape" }
+        const MAX_TILES_PER_GROUP = 6;
+        const TILE_LAYOUT_VARIANTS = [
+            {
+                name: "classic",
+                slots: [
+                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
+                    { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 3, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 4, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Support" }
+                ]
+            },
+            {
+                name: "mirror",
+                slots: [
+                    { id: 0, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
+                    { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 2, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 3, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 4, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Support" }
+                ]
+            },
+            {
+                name: "balanced",
+                slots: [
+                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 1, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
+                    { id: 2, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 3, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 4, col: 2, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 5, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Accent" }
+                ]
+            },
+            {
+                name: "hero",
+                slots: [
+                    { id: 0, col: 1, row: 1, colSpan: 3, rowSpan: 2, label: "Hero" },
+                    { id: 1, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 2, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 3, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 4, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" }
+                ]
+            }
         ];
 
         function encodePublicId(publicId) {
@@ -364,6 +403,100 @@
             };
         }
 
+        function imageAspect(asset) {
+            return asset.width > 0 && asset.height > 0 ? asset.width / asset.height : 1;
+        }
+
+        function slotAspect(slot) {
+            return slot.colSpan / slot.rowSpan;
+        }
+
+        function fitScore(asset, slot) {
+            const ratio = imageAspect(asset) / slotAspect(slot);
+            return Math.abs(Math.log(Math.max(0.0001, ratio)));
+        }
+
+        function selectSlotsForCount(slots, count) {
+            if (count >= slots.length) {
+                return slots.slice();
+            }
+
+            return slots
+                .slice()
+                .sort((left, right) => {
+                    const leftArea = left.colSpan * left.rowSpan;
+                    const rightArea = right.colSpan * right.rowSpan;
+                    if (rightArea !== leftArea) {
+                        return rightArea - leftArea;
+                    }
+                    if (left.row !== right.row) {
+                        return left.row - right.row;
+                    }
+                    return left.col - right.col;
+                })
+                .slice(0, count)
+                .sort((left, right) => left.id - right.id);
+        }
+
+        function bestSlotAssignment(assets, slots) {
+            const usedAssets = Array.from({ length: assets.length }, () => false);
+            const currentPairs = [];
+            let best = { score: Number.POSITIVE_INFINITY, pairs: [] };
+
+            function walk(slotIndex, score) {
+                if (score >= best.score) {
+                    return;
+                }
+
+                if (slotIndex >= slots.length) {
+                    best = {
+                        score,
+                        pairs: currentPairs.slice()
+                    };
+                    return;
+                }
+
+                const slot = slots[slotIndex];
+
+                for (let assetIndex = 0; assetIndex < assets.length; assetIndex += 1) {
+                    if (usedAssets[assetIndex]) {
+                        continue;
+                    }
+
+                    const asset = assets[assetIndex];
+                    usedAssets[assetIndex] = true;
+                    currentPairs.push({ asset, slot });
+                    walk(slotIndex + 1, score + fitScore(asset, slot));
+                    currentPairs.pop();
+                    usedAssets[assetIndex] = false;
+                }
+            }
+
+            walk(0, 0);
+            return best;
+        }
+
+        function chooseLayoutForGroup(assets) {
+            const candidates = TILE_LAYOUT_VARIANTS.map((variant) => {
+                const slots = selectSlotsForCount(variant.slots, assets.length);
+                const assignment = bestSlotAssignment(assets, slots);
+                return {
+                    name: variant.name,
+                    score: assignment.score,
+                    pairs: assignment.pairs
+                };
+            });
+
+            const best = candidates.reduce((winner, candidate) => {
+                if (!winner || candidate.score < winner.score) {
+                    return candidate;
+                }
+                return winner;
+            }, null);
+
+            return best;
+        }
+
         function chunkAssets(assets, size) {
             const groups = [];
             for (let i = 0; i < assets.length; i += size) {
@@ -444,7 +577,7 @@
                     setStatus(`Using fallback folder: ${folderUsed}`);
                 }
 
-                const groups = chunkAssets(assets, TILE_LAYOUT.length);
+                const groups = chunkAssets(assets, MAX_TILES_PER_GROUP);
                 gridStack.innerHTML = "";
                 let globalMouseDragButton = null;
 
@@ -454,8 +587,9 @@
                     gridWall.setAttribute("role", "group");
                     gridWall.setAttribute("aria-label", `Gallery group ${groupIndex + 1}`);
 
-                    const tiles = group.map((asset, index) => {
-                        const tile = TILE_LAYOUT[index];
+                    const layoutChoice = chooseLayoutForGroup(group);
+                    const tiles = layoutChoice.pairs
+                        .map(({ asset, slot }) => {
                         const maxWidth = Number.isFinite(asset.width) && asset.width > 0
                             ? Math.round(asset.width)
                             : 3600;
@@ -464,7 +598,7 @@
                         const fullSrcSet = cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" });
 
                         return {
-                            ...tile,
+                            ...slot,
                             publicId: asset.publicId,
                             sourceWidth: Number.isFinite(asset.width) ? Math.round(asset.width) : null,
                             sourceHeight: Number.isFinite(asset.height) ? Math.round(asset.height) : null,
@@ -475,9 +609,10 @@
                             restSrcSet: fullSrcSet,
                             focusSrc: fullSrc,
                             focusSrcSet: fullSrcSet,
-                            focusScale: focusScaleForImage(asset, tile)
+                            focusScale: focusScaleForImage(asset, slot)
                         };
-                    });
+                        })
+                        .sort((left, right) => left.id - right.id);
 
                     let activeIndex = -1;
                     const itemButtons = [];
