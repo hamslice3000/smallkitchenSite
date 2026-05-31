@@ -553,8 +553,9 @@
 
                         const renderedWidth = coverWidth * effectiveScale;
                         const renderedHeight = coverHeight * effectiveScale;
-                        const maxPanX = Math.max(0, (renderedWidth - rect.width) / 2);
-                        const maxPanY = Math.max(0, (renderedHeight - rect.height) / 2);
+                        const edgeSafetyPx = 1.5;
+                        const maxPanX = Math.max(0, (renderedWidth - rect.width) / 2 - edgeSafetyPx);
+                        const maxPanY = Math.max(0, (renderedHeight - rect.height) / 2 - edgeSafetyPx);
 
                         return {
                             zoom: transform.zoom,
@@ -722,6 +723,11 @@
                         thumb.sizes = galleryImageSizes();
                         thumb.srcset = tile.restSrcSet;
                         thumb.src = tile.restSrc;
+                        thumb.addEventListener("load", () => {
+                            if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
+                                button.dataset.imageAspect = String(thumb.naturalWidth / thumb.naturalHeight);
+                            }
+                        });
 
                         const label = document.createElement("div");
                         label.className = "tile-label";
