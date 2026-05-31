@@ -478,6 +478,7 @@
                     let activeIndex = -1;
                     const itemButtons = [];
                     let touchGestureState = null;
+                    let mouseDragState = null;
 
                     function getTouchTransform(button) {
                         const image = button.querySelector(".grid-thumb");
@@ -571,9 +572,64 @@
                     }
 
                     function clearHoverMotion() {
+                        if (mouseDragState && mouseDragState.button) {
+                            mouseDragState.button.classList.remove("is-touch-gesturing");
+                        }
                         activeIndex = -1;
                         touchGestureState = null;
+                        mouseDragState = null;
                         updateGridState();
+                    }
+
+                    function beginMouseDrag(button, tileId, event) {
+                        if (event.button !== 0) {
+                            return;
+                        }
+
+                        applyHoverMotion(tileId);
+                        const startTransform = getTouchTransform(button);
+                        mouseDragState = {
+                            tileId,
+                            button,
+                            startX: event.clientX,
+                            startY: event.clientY,
+                            startZoom: startTransform.zoom,
+                            startPanX: startTransform.panX,
+                            startPanY: startTransform.panY
+                        };
+                        button.classList.add("is-touch-gesturing");
+                        event.preventDefault();
+                    }
+
+                    function handleMouseDragMove(event) {
+                        if (!mouseDragState) {
+                            return;
+                        }
+
+                        const nextPanX = mouseDragState.startPanX + (event.clientX - mouseDragState.startX);
+                        const nextPanY = mouseDragState.startPanY + (event.clientY - mouseDragState.startY);
+                        const clamped = clampPan(mouseDragState.button, {
+                            zoom: mouseDragState.startZoom,
+                            panX: nextPanX,
+                            panY: nextPanY
+                        });
+
+                        applyTouchTransform(mouseDragState.button, clamped);
+                        event.preventDefault();
+                    }
+
+                    function endMouseDrag(event) {
+                        if (!mouseDragState) {
+                            return;
+                        }
+
+                        const draggedButton = mouseDragState.button;
+                        draggedButton.classList.remove("is-touch-gesturing");
+                        mouseDragState = null;
+
+                        if (event && !gridWall.matches(":hover")) {
+                            clearHoverMotion();
+                        }
                     }
 
                     function applyHoverMotion(focusIndex) {
@@ -595,6 +651,7 @@
                         const thumb = document.createElement("img");
                         thumb.className = "grid-thumb";
                         thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
+                        thumb.draggable = false;
                         thumb.loading = "lazy";
                         thumb.sizes = galleryImageSizes();
                         thumb.srcset = tile.restSrcSet;
@@ -608,6 +665,8 @@
                         button.appendChild(label);
                         button.addEventListener("mouseenter", () => applyHoverMotion(tile.id));
                         button.addEventListener("focus", () => applyHoverMotion(tile.id));
+                        button.addEventListener("mousedown", (event) => beginMouseDrag(button, tile.id, event));
+                        button.addEventListener("dragstart", (event) => event.preventDefault());
                         button.addEventListener("touchstart", (event) => {
                             if (event.touches.length === 1) {
                                 applyHoverMotion(tile.id);
@@ -687,7 +746,13 @@
                         gridWall.appendChild(button);
                     });
 
-                    gridWall.addEventListener("mouseleave", clearHoverMotion);
+                    document.addEventListener("mousemove", handleMouseDragMove);
+                    document.addEventListener("mouseup", endMouseDrag);
+                    gridWall.addEventListener("mouseleave", () => {
+                        if (!mouseDragState) {
+                            clearHoverMotion();
+                        }
+                    });
                     gridWall.addEventListener("focusout", (event) => {
                         if (!gridWall.contains(event.relatedTarget)) {
                             clearHoverMotion();
