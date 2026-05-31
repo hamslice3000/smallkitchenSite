@@ -233,50 +233,74 @@
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const folderName = "smallkitchen";
-        const MAX_TILES_PER_GROUP = 6;
+        const MAX_TILES_PER_GROUP = 10;
         const TILE_LAYOUT_VARIANTS = [
             {
-                name: "classic",
+                name: "classic-10",
+                cols: 4,
+                rows: 4,
                 slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
+                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 2, label: "Hero" },
                     { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
                     { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 3, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 4, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Support" }
+                    { id: 3, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 4, col: 1, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 5, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             },
             {
-                name: "mirror",
+                name: "mirror-10",
+                cols: 4,
+                rows: 4,
                 slots: [
-                    { id: 0, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
+                    { id: 0, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Hero" },
                     { id: 1, col: 2, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
                     { id: 2, col: 1, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 3, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 4, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Support" }
+                    { id: 3, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 4, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
+                    { id: 5, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             },
             {
-                name: "balanced",
-                slots: [
-                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 1, col: 3, row: 1, colSpan: 2, rowSpan: 2, label: "Primary" },
-                    { id: 2, col: 1, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
-                    { id: 3, col: 2, row: 2, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 4, col: 2, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" },
-                    { id: 5, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Accent" }
-                ]
-            },
-            {
-                name: "hero",
+                name: "hero-wide",
+                cols: 4,
+                rows: 4,
                 slots: [
                     { id: 0, col: 1, row: 1, colSpan: 3, rowSpan: 2, label: "Hero" },
                     { id: 1, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
-                    { id: 2, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 2, col: 4, row: 2, colSpan: 1, rowSpan: 2, label: "Tall" },
                     { id: 3, col: 1, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
                     { id: 4, col: 2, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
-                    { id: 5, col: 3, row: 3, colSpan: 2, rowSpan: 1, label: "Wide" }
+                    { id: 5, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
+                ]
+            },
+            {
+                name: "hero-tall",
+                cols: 4,
+                rows: 4,
+                slots: [
+                    { id: 0, col: 1, row: 1, colSpan: 2, rowSpan: 3, label: "Hero" },
+                    { id: 1, col: 3, row: 1, colSpan: 1, rowSpan: 2, label: "Tall" },
+                    { id: 2, col: 4, row: 1, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 3, col: 4, row: 2, colSpan: 1, rowSpan: 1, label: "Accent" },
+                    { id: 4, col: 3, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 5, col: 4, row: 3, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 6, col: 1, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 7, col: 2, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 8, col: 3, row: 4, colSpan: 1, rowSpan: 1, label: "Square" },
+                    { id: 9, col: 4, row: 4, colSpan: 1, rowSpan: 1, label: "Square" }
                 ]
             }
         ];
@@ -372,8 +396,7 @@
             return "(max-width: 768px) 48vw, (max-width: 1200px) 38vw, 70vw";
         }
 
-        function tracksForAxis(hoveredTile, axis) {
-            const count = axis === "col" ? 4 : 3;
+        function tracksForAxis(hoveredTile, axis, count) {
             const base = Array(count).fill(1);
 
             if (!hoveredTile) {
@@ -439,41 +462,39 @@
         }
 
         function bestSlotAssignment(assets, slots) {
-            const usedAssets = Array.from({ length: assets.length }, () => false);
-            const currentPairs = [];
-            let best = { score: Number.POSITIVE_INFINITY, pairs: [] };
-
-            function walk(slotIndex, score) {
-                if (score >= best.score) {
-                    return;
-                }
-
-                if (slotIndex >= slots.length) {
-                    best = {
-                        score,
-                        pairs: currentPairs.slice()
-                    };
-                    return;
-                }
-
-                const slot = slots[slotIndex];
-
-                for (let assetIndex = 0; assetIndex < assets.length; assetIndex += 1) {
-                    if (usedAssets[assetIndex]) {
-                        continue;
+            const remainingAssets = assets.slice();
+            const orderedSlots = slots
+                .slice()
+                .sort((left, right) => {
+                    const leftArea = left.colSpan * left.rowSpan;
+                    const rightArea = right.colSpan * right.rowSpan;
+                    if (rightArea !== leftArea) {
+                        return rightArea - leftArea;
                     }
+                    return left.id - right.id;
+                });
 
-                    const asset = assets[assetIndex];
-                    usedAssets[assetIndex] = true;
-                    currentPairs.push({ asset, slot });
-                    walk(slotIndex + 1, score + fitScore(asset, slot));
-                    currentPairs.pop();
-                    usedAssets[assetIndex] = false;
-                }
-            }
+            const pairs = [];
+            let score = 0;
 
-            walk(0, 0);
-            return best;
+            orderedSlots.forEach((slot) => {
+                let bestIndex = 0;
+                let bestScore = Number.POSITIVE_INFINITY;
+
+                remainingAssets.forEach((asset, index) => {
+                    const current = fitScore(asset, slot);
+                    if (current < bestScore) {
+                        bestScore = current;
+                        bestIndex = index;
+                    }
+                });
+
+                const [asset] = remainingAssets.splice(bestIndex, 1);
+                pairs.push({ asset, slot });
+                score += bestScore;
+            });
+
+            return { score, pairs };
         }
 
         function chooseLayoutForGroup(assets) {
@@ -494,7 +515,13 @@
                 return winner;
             }, null);
 
-            return best;
+            return {
+                name: best.name,
+                score: best.score,
+                pairs: best.pairs,
+                cols: TILE_LAYOUT_VARIANTS.find((variant) => variant.name === best.name).cols,
+                rows: TILE_LAYOUT_VARIANTS.find((variant) => variant.name === best.name).rows
+            };
         }
 
         function chunkAssets(assets, size) {
@@ -701,8 +728,8 @@
 
                     function updateGridState() {
                         const hoveredTile = tiles.find((tile) => tile.id === activeIndex) || null;
-                        gridWall.style.gridTemplateColumns = tracksForAxis(hoveredTile, "col");
-                        gridWall.style.gridTemplateRows = tracksForAxis(hoveredTile, "row");
+                        gridWall.style.gridTemplateColumns = tracksForAxis(hoveredTile, "col", layoutChoice.cols);
+                        gridWall.style.gridTemplateRows = tracksForAxis(hoveredTile, "row", layoutChoice.rows);
                         gridWall.classList.toggle("is-hovering", activeIndex !== -1);
 
                         itemButtons.forEach((button) => {
