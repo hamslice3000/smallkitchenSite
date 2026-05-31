@@ -436,7 +436,16 @@
 
         function fitScore(asset, slot) {
             const ratio = imageAspect(asset) / slotAspect(slot);
-            return Math.abs(Math.log(Math.max(0.0001, ratio)));
+            let score = Math.abs(Math.log(Math.max(0.0001, ratio)));
+
+            // 1) Penalize portrait images placed into strongly wide slots.
+            const imgAspect = imageAspect(asset);
+            const slotWide = slotAspect(slot);
+            if (imgAspect < 0.95 && slotWide > 1.25) {
+                score += (slotWide - 1.25) * 0.55;
+            }
+
+            return score;
         }
 
         function selectSlotsForCount(slots, count) {
@@ -498,12 +507,21 @@
         }
 
         function chooseLayoutForGroup(assets) {
+            const portraitCount = assets.filter((asset) => imageAspect(asset) < 0.95).length;
+            const portraitRatio = assets.length ? portraitCount / assets.length : 0;
+
             const candidates = TILE_LAYOUT_VARIANTS.map((variant) => {
                 const slots = selectSlotsForCount(variant.slots, assets.length);
                 const assignment = bestSlotAssignment(assets, slots);
+                const portraitFriendlyCount = slots.filter((slot) => slot.rowSpan >= slot.colSpan).length;
+                const portraitFriendlyRatio = slots.length ? portraitFriendlyCount / slots.length : 0;
+
+                // 2) Bias variant choice toward more portrait-friendly layouts when group images skew portrait.
+                const layoutBiasPenalty = Math.max(0, portraitRatio - portraitFriendlyRatio) * assets.length * 1.2;
+
                 return {
                     name: variant.name,
-                    score: assignment.score,
+                    score: assignment.score + layoutBiasPenalty,
                     pairs: assignment.pairs
                 };
             });
