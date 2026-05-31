@@ -677,8 +677,10 @@
                         const tile = tiles.find((entry) => entry.id === tileId);
                         const image = button.querySelector(".grid-thumb");
                         const currentTransform = getTouchTransform(button);
+                        const focusScale = Number(button.style.getPropertyValue("--focus-scale") || "1.03") || 1.03;
+                        const maxWheelZoom = Math.max(1, 3.09 / focusScale);
                         const zoomFactor = Math.exp(-event.deltaY * 0.0015);
-                        const nextZoom = Math.max(1, Math.min(4, currentTransform.zoom * zoomFactor));
+                        const nextZoom = Math.max(1, Math.min(maxWheelZoom, currentTransform.zoom * zoomFactor));
 
                         const clamped = clampPan(button, {
                             zoom: nextZoom,
