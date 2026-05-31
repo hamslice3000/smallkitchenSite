@@ -534,8 +534,27 @@
                         const rect = button.getBoundingClientRect();
                         const focusScale = Number(button.style.getPropertyValue("--focus-scale") || "1.03") || 1.03;
                         const effectiveScale = Math.max(1, focusScale * transform.zoom);
-                        const maxPanX = ((effectiveScale - 1) * rect.width) / 2;
-                        const maxPanY = ((effectiveScale - 1) * rect.height) / 2;
+                        const imageAspect = Number(button.dataset.imageAspect || "0");
+                        const safeImageAspect = Number.isFinite(imageAspect) && imageAspect > 0
+                            ? imageAspect
+                            : rect.width / Math.max(1, rect.height);
+                        const tileAspect = rect.width / Math.max(1, rect.height);
+
+                        let coverWidth = rect.width;
+                        let coverHeight = rect.height;
+
+                        if (safeImageAspect > tileAspect) {
+                            coverWidth = rect.height * safeImageAspect;
+                            coverHeight = rect.height;
+                        } else {
+                            coverWidth = rect.width;
+                            coverHeight = rect.width / safeImageAspect;
+                        }
+
+                        const renderedWidth = coverWidth * effectiveScale;
+                        const renderedHeight = coverHeight * effectiveScale;
+                        const maxPanX = Math.max(0, (renderedWidth - rect.width) / 2);
+                        const maxPanY = Math.max(0, (renderedHeight - rect.height) / 2);
 
                         return {
                             zoom: transform.zoom,
@@ -691,6 +710,9 @@
                         const style = tileStyle(tile);
                         button.style.gridColumn = style.gridColumn;
                         button.style.gridRow = style.gridRow;
+                        if (tile.sourceWidth && tile.sourceHeight) {
+                            button.dataset.imageAspect = String(tile.sourceWidth / tile.sourceHeight);
+                        }
 
                         const thumb = document.createElement("img");
                         thumb.className = "grid-thumb";
