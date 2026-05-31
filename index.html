@@ -130,12 +130,12 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center center;
+            object-position: calc(50% + var(--touch-pan-x)) calc(50% + var(--touch-pan-y));
             display: block;
             --touch-pan-x: 0px;
             --touch-pan-y: 0px;
             --touch-zoom: 1;
-            transform: translate3d(var(--touch-pan-x), var(--touch-pan-y), 0) scale(var(--touch-zoom));
+            transform: scale(var(--touch-zoom));
             transition: transform 700ms cubic-bezier(.16, 1, .3, 1), filter 700ms cubic-bezier(.16, 1, .3, 1);
         }
 
@@ -174,7 +174,7 @@
         }
 
         .grid-item.is-focused .grid-thumb {
-            transform: translate3d(var(--touch-pan-x), var(--touch-pan-y), 0) scale(calc(var(--focus-scale, 1.06) * var(--touch-zoom)));
+            transform: scale(calc(var(--focus-scale, 1.06) * var(--touch-zoom)));
             filter: saturate(1.25);
         }
 
@@ -552,11 +552,9 @@
                             coverHeight = frameWidth / safeImageAspect;
                         }
 
-                        const renderedWidth = coverWidth * effectiveScale;
-                        const renderedHeight = coverHeight * effectiveScale;
                         const edgeSafetyPx = 1.5;
-                        const maxPanX = Math.max(0, (renderedWidth - frameWidth) / 2 - edgeSafetyPx);
-                        const maxPanY = Math.max(0, (renderedHeight - frameHeight) / 2 - edgeSafetyPx);
+                        const maxPanX = Math.max(0, (coverWidth - frameWidth / effectiveScale) / 2 - edgeSafetyPx / effectiveScale);
+                        const maxPanY = Math.max(0, (coverHeight - frameHeight / effectiveScale) / 2 - edgeSafetyPx / effectiveScale);
 
                         return {
                             zoom: transform.zoom,
