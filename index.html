@@ -696,6 +696,10 @@
                     }
 
                     function applyHoverMotion(focusIndex) {
+                        if (mouseDragState && mouseDragState.tileId !== focusIndex) {
+                            return;
+                        }
+
                         activeIndex = focusIndex;
                         updateGridState();
                     }
