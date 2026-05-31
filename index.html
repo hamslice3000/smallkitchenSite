@@ -465,6 +465,8 @@
                         return {
                             ...tile,
                             publicId: asset.publicId,
+                            sourceWidth: Number.isFinite(asset.width) ? Math.round(asset.width) : null,
+                            sourceHeight: Number.isFinite(asset.height) ? Math.round(asset.height) : null,
                             maxWidth,
                             srcSetWidths,
                             restSrc: fullSrc,
@@ -676,7 +678,9 @@
 
                         const label = document.createElement("div");
                         label.className = "tile-label";
-                        label.textContent = tile.label || displayNameFromPublicId(tile.publicId);
+                        label.textContent = tile.sourceWidth && tile.sourceHeight
+                            ? `${tile.sourceWidth} x ${tile.sourceHeight}`
+                            : "Unknown size";
 
                         button.appendChild(thumb);
                         button.appendChild(label);
