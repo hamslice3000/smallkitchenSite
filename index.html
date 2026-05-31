@@ -632,6 +632,23 @@
                         }
                     }
 
+                    function handleWheelZoom(button, tileId, event) {
+                        applyHoverMotion(tileId);
+
+                        const currentTransform = getTouchTransform(button);
+                        const zoomFactor = Math.exp(-event.deltaY * 0.0015);
+                        const nextZoom = Math.max(1, Math.min(4, currentTransform.zoom * zoomFactor));
+
+                        const clamped = clampPan(button, {
+                            zoom: nextZoom,
+                            panX: currentTransform.panX,
+                            panY: currentTransform.panY
+                        });
+
+                        applyTouchTransform(button, clamped);
+                        event.preventDefault();
+                    }
+
                     function applyHoverMotion(focusIndex) {
                         activeIndex = focusIndex;
                         updateGridState();
@@ -666,6 +683,7 @@
                         button.addEventListener("mouseenter", () => applyHoverMotion(tile.id));
                         button.addEventListener("focus", () => applyHoverMotion(tile.id));
                         button.addEventListener("mousedown", (event) => beginMouseDrag(button, tile.id, event));
+                        button.addEventListener("wheel", (event) => handleWheelZoom(button, tile.id, event), { passive: false });
                         button.addEventListener("dragstart", (event) => event.preventDefault());
                         button.addEventListener("touchstart", (event) => {
                             if (event.touches.length === 1) {
