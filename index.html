@@ -234,6 +234,8 @@
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
         const folderName = "smallkitchen";
         const MAX_TILES_PER_GROUP = 7;
+        const HERO_SLOT_ID = 0;
+        const NON_HERO_MAX_WIDTH = 2800;
         const TILE_LAYOUT_VARIANTS = [
             {
                 name: "hero-left-right-grid",
@@ -338,8 +340,28 @@
             return Array.from(new Set(widths)).sort((a, b) => a - b);
         }
 
-        function galleryImageSizes() {
-            return "(max-width: 768px) 48vw, (max-width: 1200px) 38vw, 70vw";
+        function isHeroSlot(tile) {
+            return tile.id === HERO_SLOT_ID || /hero/i.test(tile.label || "");
+        }
+
+        function maxWidthForTile(asset, tile) {
+            const sourceWidth = Number.isFinite(asset.width) && asset.width > 0
+                ? Math.round(asset.width)
+                : 3600;
+
+            if (isHeroSlot(tile)) {
+                return sourceWidth;
+            }
+
+            return Math.min(sourceWidth, NON_HERO_MAX_WIDTH);
+        }
+
+        function galleryImageSizes(tile) {
+            if (isHeroSlot(tile)) {
+                return "(max-width: 768px) 96vw, (max-width: 1200px) 62vw, 56vw";
+            }
+
+            return "(max-width: 768px) 46vw, (max-width: 1200px) 28vw, 22vw";
         }
 
         function tracksForAxis(hoveredTile, axis, count) {
@@ -380,6 +402,14 @@
             return slot.colSpan / slot.rowSpan;
         }
 
+        function isGridSlot(slot) {
+            return /^Grid\s/i.test(slot.label || "");
+        }
+
+        function isLeftLowerSlot(slot) {
+            return /^Left Lower\s/i.test(slot.label || "");
+        }
+
         function fitScore(asset, slot) {
             const ratio = imageAspect(asset) / slotAspect(slot);
             let score = Math.abs(Math.log(Math.max(0.0001, ratio)));
@@ -389,6 +419,27 @@
             const slotWide = slotAspect(slot);
             if (imgAspect < 0.95 && slotWide > 1.25) {
                 score += (slotWide - 1.25) * 0.55;
+            }
+
+            // 2) Strong slot-intent bias:
+            // Grid slots prefer square-ish images; Left Lower slots prefer landscape images.
+            const isSquareish = imgAspect >= 0.9 && imgAspect <= 1.1;
+            const isLandscape = imgAspect > 1.08;
+
+            if (isGridSlot(slot)) {
+                if (isSquareish) {
+                    score -= 0.4;
+                } else {
+                    score += 2.2 + Math.min(1.4, Math.abs(Math.log(Math.max(0.0001, imgAspect))) * 0.9);
+                }
+            }
+
+            if (isLeftLowerSlot(slot)) {
+                if (isLandscape) {
+                    score -= 0.35;
+                } else {
+                    score += 2.1 + Math.max(0, 1.08 - imgAspect) * 1.2;
+                }
             }
 
             return score;
@@ -596,9 +647,7 @@
                     const layoutChoice = chooseLayoutForGroup(group);
                     const tiles = layoutChoice.pairs
                         .map(({ asset, slot }) => {
-                        const maxWidth = Number.isFinite(asset.width) && asset.width > 0
-                            ? Math.round(asset.width)
-                            : 3600;
+                        const maxWidth = maxWidthForTile(asset, slot);
                         const srcSetWidths = srcSetWidthsForMax(maxWidth);
                         const fullSrc = cloudinaryBestSrc(asset.publicId, maxWidth, { cropMode: "limit" });
                         const fullSrcSet = cloudinarySrcSet(asset.publicId, srcSetWidths, { cropMode: "limit" });
@@ -878,7 +927,10 @@
                         thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                         thumb.draggable = false;
                         thumb.loading = "lazy";
-                        thumb.sizes = galleryImageSizes();
+                        thumb.sizes = galleryImageSizes(tile);
+                        if (isHeroSlot(tile)) {
+                            thumb.fetchPriority = "high";
+                        }
                         thumb.srcset = tile.restSrcSet;
                         thumb.src = tile.restSrc;
                         thumb.addEventListener("load", () => {
