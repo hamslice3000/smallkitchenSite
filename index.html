@@ -446,6 +446,7 @@
 
                 const groups = chunkAssets(assets, TILE_LAYOUT.length);
                 gridStack.innerHTML = "";
+                let globalMouseDragButton = null;
 
                 groups.forEach((group, groupIndex) => {
                     const gridWall = document.createElement("div");
@@ -605,6 +606,9 @@
                     function clearHoverMotion() {
                         if (mouseDragState && mouseDragState.button) {
                             mouseDragState.button.classList.remove("is-touch-gesturing");
+                            if (globalMouseDragButton === mouseDragState.button) {
+                                globalMouseDragButton = null;
+                            }
                         }
                         activeIndex = -1;
                         touchGestureState = null;
@@ -628,6 +632,7 @@
                             startPanX: startTransform.panX,
                             startPanY: startTransform.panY
                         };
+                        globalMouseDragButton = button;
                         button.classList.add("is-touch-gesturing");
                         event.preventDefault();
                     }
@@ -656,6 +661,9 @@
 
                         const draggedButton = mouseDragState.button;
                         draggedButton.classList.remove("is-touch-gesturing");
+                        if (globalMouseDragButton === draggedButton) {
+                            globalMouseDragButton = null;
+                        }
                         mouseDragState = null;
 
                         if (event && !gridWall.matches(":hover")) {
@@ -696,6 +704,10 @@
                     }
 
                     function applyHoverMotion(focusIndex) {
+                        if (globalMouseDragButton && (!mouseDragState || mouseDragState.button !== globalMouseDragButton)) {
+                            return;
+                        }
+
                         if (mouseDragState && mouseDragState.tileId !== focusIndex) {
                             return;
                         }
