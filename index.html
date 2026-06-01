@@ -133,6 +133,12 @@
             outline: none;
         }
 
+        .autoplay-toggle-state {
+            display: inline-block;
+            width: 3ch;
+            text-align: left;
+        }
+
         .grid-stack {
             display: grid;
             gap: 6px;
@@ -313,7 +319,7 @@
             <div class="grid-stack" id="grid-stack"></div>
         </div>
         <div class="below-row">
-            <button id="autoplay-toggle-button" class="autoplay-toggle-btn" type="button">autoplay videos off</button>
+            <button id="autoplay-toggle-button" class="autoplay-toggle-btn" type="button"><span class="autoplay-toggle-label">autoplay videos </span><span id="autoplay-toggle-state" class="autoplay-toggle-state">off</span></button>
         </div>
     </div>
     <script type="text/javascript">
@@ -774,6 +780,12 @@
         function updateAutoplayToggleLabel() {
             const autoplayToggleButton = document.getElementById("autoplay-toggle-button");
             if (!autoplayToggleButton) {
+                return;
+            }
+
+            const autoplayToggleState = document.getElementById("autoplay-toggle-state");
+            if (autoplayToggleState) {
+                autoplayToggleState.textContent = autoplayVideosEnabled ? "on" : "off";
                 return;
             }
 
