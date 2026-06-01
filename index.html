@@ -1027,6 +1027,10 @@
                                 if (tile.mediaType === "image") {
                                     image.srcset = tile.restSrcSet;
                                     image.src = tile.restSrc;
+                                } else if (autoplayVideosEnabled && image.paused) {
+                                    image.dataset.userPausedByClick = "0";
+                                    image.dataset.touchPauseArmed = "0";
+                                    image.play().catch(() => {});
                                 }
                                 button.style.removeProperty("--focus-scale");
                                 delete image.dataset.forcedMaxRes;
@@ -1179,6 +1183,8 @@
                             thumb.preload = "metadata";
                             thumb.src = tile.restSrc;
                             thumb.dataset.userPausedByClick = "0";
+                            thumb.dataset.touchPauseArmed = "0";
+                            thumb.dataset.ignoreNextClick = "0";
                             thumb.setAttribute("aria-label", tile.label || displayNameFromPublicId(tile.publicId));
 
                             const syncVideoPrompt = () => {
@@ -1195,16 +1201,50 @@
                             thumb.addEventListener("play", syncVideoPrompt);
                             thumb.addEventListener("pause", syncVideoPrompt);
                             thumb.addEventListener("ended", syncVideoPrompt);
+                            thumb.addEventListener("touchend", (event) => {
+                                if (!autoplayVideosEnabled) {
+                                    return;
+                                }
+
+                                event.preventDefault();
+
+                                if (!thumb.paused && thumb.dataset.userPausedByClick !== "1") {
+                                    if (thumb.dataset.touchPauseArmed !== "1") {
+                                        thumb.dataset.touchPauseArmed = "1";
+                                    } else {
+                                        thumb.dataset.userPausedByClick = "1";
+                                        thumb.dataset.touchPauseArmed = "0";
+                                        thumb.pause();
+                                    }
+
+                                    thumb.dataset.ignoreNextClick = "1";
+                                    return;
+                                }
+
+                                thumb.dataset.userPausedByClick = "0";
+                                thumb.dataset.touchPauseArmed = "0";
+                                thumb.dataset.ignoreNextClick = "1";
+                                thumb.play().catch(() => {
+                                    button.classList.remove("is-video-playing");
+                                });
+                            }, { passive: false });
                             thumb.addEventListener("click", (event) => {
+                                if (thumb.dataset.ignoreNextClick === "1") {
+                                    thumb.dataset.ignoreNextClick = "0";
+                                    return;
+                                }
+
                                 event.preventDefault();
                                 event.stopPropagation();
                                 if (thumb.paused) {
                                     thumb.dataset.userPausedByClick = "0";
+                                    thumb.dataset.touchPauseArmed = "0";
                                     thumb.play().catch(() => {
                                         button.classList.remove("is-video-playing");
                                     });
                                 } else {
                                     thumb.dataset.userPausedByClick = "1";
+                                    thumb.dataset.touchPauseArmed = "0";
                                     thumb.pause();
                                 }
                             });
