@@ -188,8 +188,13 @@
             --touch-pan-x: 0px;
             --touch-pan-y: 0px;
             --touch-zoom: 1;
+            opacity: 0;
             transform: scale(var(--touch-zoom));
-            transition: transform 700ms cubic-bezier(.16, 1, .3, 1), filter 700ms cubic-bezier(.16, 1, .3, 1);
+            transition: transform 700ms cubic-bezier(.16, 1, .3, 1), filter 700ms cubic-bezier(.16, 1, .3, 1), opacity 360ms ease;
+        }
+
+        .grid-thumb.is-ready {
+            opacity: 1;
         }
 
         .grid-item::before {
@@ -1162,6 +1167,9 @@
                             : document.createElement("img");
                         thumb.className = "grid-thumb";
                         thumb.draggable = false;
+                        const markThumbReady = () => {
+                            thumb.classList.add("is-ready");
+                        };
 
                         if (tile.mediaType === "video") {
                             thumb.muted = true;
@@ -1181,6 +1189,8 @@
                                     button.dataset.imageAspect = String(thumb.videoWidth / thumb.videoHeight);
                                 }
                             });
+                            thumb.addEventListener("loadeddata", markThumbReady, { once: true });
+                            thumb.addEventListener("canplay", markThumbReady, { once: true });
                             thumb.addEventListener("play", syncVideoPrompt);
                             thumb.addEventListener("pause", syncVideoPrompt);
                             thumb.addEventListener("ended", syncVideoPrompt);
@@ -1199,6 +1209,10 @@
                             });
                             syncVideoPrompt();
 
+                            if (thumb.readyState >= 2) {
+                                markThumbReady();
+                            }
+
                             if (autoplayVideosEnabled) {
                                 thumb.play().catch(() => {});
                             }
@@ -1215,7 +1229,12 @@
                                 if (thumb.naturalWidth > 0 && thumb.naturalHeight > 0) {
                                     button.dataset.imageAspect = String(thumb.naturalWidth / thumb.naturalHeight);
                                 }
+                                markThumbReady();
                             });
+                            thumb.addEventListener("error", markThumbReady, { once: true });
+                            if (thumb.complete) {
+                                markThumbReady();
+                            }
                         }
 
                         const label = document.createElement("div");
