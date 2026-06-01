@@ -1030,7 +1030,12 @@
                                 } else if (autoplayVideosEnabled && image.paused) {
                                     image.dataset.userPausedByClick = "0";
                                     image.dataset.touchPauseArmed = "0";
+                                    image.dataset.ignoreNextClick = "0";
                                     image.play().catch(() => {});
+                                } else if (tile.mediaType === "video") {
+                                    // Clear stale touch-toggle state whenever video tile loses focus.
+                                    image.dataset.touchPauseArmed = "0";
+                                    image.dataset.ignoreNextClick = "0";
                                 }
                                 button.style.removeProperty("--focus-scale");
                                 delete image.dataset.forcedMaxRes;
