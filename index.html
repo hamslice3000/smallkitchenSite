@@ -60,13 +60,27 @@
             line-height: 1.45;
         }
 
-        .hint {
+        .refresh-btn {
+            appearance: none;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 999px;
             padding: 10px 14px;
-            color: var(--muted);
+            color: var(--text);
             font-size: 12px;
+            font-family: inherit;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
             white-space: nowrap;
+            background: rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: background 180ms ease, border-color 180ms ease;
+        }
+
+        .refresh-btn:hover,
+        .refresh-btn:focus-visible {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.35);
+            outline: none;
         }
 
         #status {
@@ -231,10 +245,6 @@
                 margin-bottom: 18px;
             }
 
-            .hint {
-                display: none;
-            }
-
             #my-gallery {
                 border-radius: 0;
                 padding: 8px;
@@ -255,9 +265,9 @@
     <div class="page-shell">
         <div class="top-row">
             <div>
-                <h1 class="title">smallkitchenuk</h1>
+                <h1 class="title">small&gt;kitchen&gt;uk</h1>
             </div>
-            <div class="hint">Hover over the images</div>
+            <button id="refresh-button" class="refresh-btn" type="button">Refresh</button>
         </div>
         <div id="status"></div>
         <div id="my-gallery">
@@ -1229,6 +1239,11 @@
             } catch (error) {
                 setStatus(`Unable to load gallery assets: ${error.message}`);
             }
+        }
+
+        const refreshButton = document.getElementById("refresh-button");
+        if (refreshButton) {
+            refreshButton.addEventListener("click", () => window.location.reload());
         }
 
         renderGridHoverGallery();
