@@ -102,6 +102,37 @@
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
         }
 
+        .below-row {
+            margin-top: 12px;
+            padding: 0 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .autoplay-toggle-btn {
+            appearance: none;
+            border: 0;
+            padding: 0;
+            margin: 0;
+            color: var(--text);
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 18px;
+            line-height: 1.2;
+            letter-spacing: 0.04em;
+            text-transform: lowercase;
+            white-space: nowrap;
+            background: none;
+            cursor: pointer;
+            transition: opacity 160ms ease;
+        }
+
+        .autoplay-toggle-btn:hover,
+        .autoplay-toggle-btn:focus-visible {
+            opacity: 0.78;
+            outline: none;
+        }
+
         .grid-stack {
             display: grid;
             gap: 6px;
@@ -249,6 +280,10 @@
                 padding: 0 4px;
             }
 
+            .below-row {
+                padding: 0 4px;
+            }
+
             #my-gallery {
                 border-radius: 0;
                 padding: 8px;
@@ -277,6 +312,9 @@
         <div id="my-gallery">
             <div class="grid-stack" id="grid-stack"></div>
         </div>
+        <div class="below-row">
+            <button id="autoplay-toggle-button" class="autoplay-toggle-btn" type="button">autoplay videos off</button>
+        </div>
     </div>
     <script type="text/javascript">
         const cloudName = window.__APP_CONFIG__?.CLOUDINARY_CLOUD_NAME || "";
@@ -285,6 +323,7 @@
         const MOBILE_BREAKPOINT_PX = 768;
         const HERO_SLOT_ID = 0;
         const NON_HERO_MAX_WIDTH = 2800;
+        let autoplayVideosEnabled = false;
         const MOBILE_TILE_LAYOUT_VARIANT = {
             name: "mobile-hero-squares-landscape",
             cols: 2,
@@ -731,6 +770,34 @@
             status.textContent = "";
         }
 
+        function updateAutoplayToggleLabel() {
+            const autoplayToggleButton = document.getElementById("autoplay-toggle-button");
+            if (!autoplayToggleButton) {
+                return;
+            }
+
+            autoplayToggleButton.textContent = autoplayVideosEnabled
+                ? "autoplay videos on"
+                : "autoplay videos off";
+        }
+
+        function applyAutoplayModeToVisibleVideos() {
+            const videos = document.querySelectorAll(".grid-item video.grid-thumb");
+
+            videos.forEach((video) => {
+                const userPausedByClick = video.dataset.userPausedByClick === "1";
+
+                if (autoplayVideosEnabled) {
+                    if (!userPausedByClick) {
+                        video.play().catch(() => {});
+                    }
+                    return;
+                }
+
+                video.pause();
+            });
+        }
+
         async function renderGridHoverGallery() {
             const gridStack = document.getElementById("grid-stack");
 
@@ -1069,6 +1136,7 @@
                             thumb.playsInline = true;
                             thumb.preload = "metadata";
                             thumb.src = tile.restSrc;
+                            thumb.dataset.userPausedByClick = "0";
                             thumb.setAttribute("aria-label", tile.label || displayNameFromPublicId(tile.publicId));
 
                             const syncVideoPrompt = () => {
@@ -1087,14 +1155,20 @@
                                 event.preventDefault();
                                 event.stopPropagation();
                                 if (thumb.paused) {
+                                    thumb.dataset.userPausedByClick = "0";
                                     thumb.play().catch(() => {
                                         button.classList.remove("is-video-playing");
                                     });
                                 } else {
+                                    thumb.dataset.userPausedByClick = "1";
                                     thumb.pause();
                                 }
                             });
                             syncVideoPrompt();
+
+                            if (autoplayVideosEnabled) {
+                                thumb.play().catch(() => {});
+                            }
                         } else {
                             thumb.alt = tile.label || displayNameFromPublicId(tile.publicId);
                             thumb.loading = "lazy";
@@ -1249,6 +1323,17 @@
         if (refreshButton) {
             refreshButton.addEventListener("click", () => window.location.reload());
         }
+
+        const autoplayToggleButton = document.getElementById("autoplay-toggle-button");
+        if (autoplayToggleButton) {
+            autoplayToggleButton.addEventListener("click", () => {
+                autoplayVideosEnabled = !autoplayVideosEnabled;
+                updateAutoplayToggleLabel();
+                applyAutoplayModeToVisibleVideos();
+            });
+        }
+
+        updateAutoplayToggleLabel();
 
         renderGridHoverGallery();
     </script>
