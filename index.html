@@ -34,7 +34,7 @@
             min-height: 80vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
         }
 
         .top-row {
@@ -62,24 +62,24 @@
 
         .refresh-btn {
             appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
-            padding: 10px 14px;
+            border: 0;
+            padding: 0;
+            margin: 0;
             color: var(--text);
-            font-size: 12px;
-            font-family: inherit;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(30px, 4vw, 54px);
+            line-height: 1.02;
+            letter-spacing: -0.02em;
+            text-transform: lowercase;
             white-space: nowrap;
-            background: rgba(255, 255, 255, 0.06);
+            background: none;
             cursor: pointer;
-            transition: background 180ms ease, border-color 180ms ease;
+            transition: opacity 160ms ease;
         }
 
         .refresh-btn:hover,
         .refresh-btn:focus-visible {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.35);
+            opacity: 0.78;
             outline: none;
         }
 
@@ -265,9 +265,9 @@
     <div class="page-shell">
         <div class="top-row">
             <div>
-                <h1 class="title">small&gt;kitchen&gt;uk</h1>
+                <h1 class="title">smallkitchenuk</h1>
             </div>
-            <button id="refresh-button" class="refresh-btn" type="button">Refresh</button>
+            <button id="refresh-button" class="refresh-btn" type="button">refresh</button>
         </div>
         <div id="status"></div>
         <div id="my-gallery">
