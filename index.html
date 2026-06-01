@@ -107,7 +107,7 @@
             padding: 0 6px;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: flex-end;
         }
 
         .autoplay-toggle-btn {
@@ -321,6 +321,7 @@
         const folderName = "smallkitchen";
         const MAX_TILES_PER_GROUP = 7;
         const MOBILE_BREAKPOINT_PX = 768;
+        const AUTOPLAY_STORAGE_KEY = "smallkitchen.autoplayVideosEnabled";
         const HERO_SLOT_ID = 0;
         const NON_HERO_MAX_WIDTH = 2800;
         let autoplayVideosEnabled = false;
@@ -779,6 +780,22 @@
             autoplayToggleButton.textContent = autoplayVideosEnabled
                 ? "autoplay videos on"
                 : "autoplay videos off";
+        }
+
+        function loadAutoplayPreference() {
+            try {
+                autoplayVideosEnabled = localStorage.getItem(AUTOPLAY_STORAGE_KEY) === "1";
+            } catch (_error) {
+                autoplayVideosEnabled = false;
+            }
+        }
+
+        function saveAutoplayPreference() {
+            try {
+                localStorage.setItem(AUTOPLAY_STORAGE_KEY, autoplayVideosEnabled ? "1" : "0");
+            } catch (_error) {
+                // Ignore storage failures and keep current in-memory behavior.
+            }
         }
 
         function applyAutoplayModeToVisibleVideos() {
@@ -1328,11 +1345,13 @@
         if (autoplayToggleButton) {
             autoplayToggleButton.addEventListener("click", () => {
                 autoplayVideosEnabled = !autoplayVideosEnabled;
+                saveAutoplayPreference();
                 updateAutoplayToggleLabel();
                 applyAutoplayModeToVisibleVideos();
             });
         }
 
+        loadAutoplayPreference();
         updateAutoplayToggleLabel();
 
         renderGridHoverGallery();
